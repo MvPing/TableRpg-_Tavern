@@ -1,0 +1,3592 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RPG Tavern 🎲</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0b08;
+  --bg2: #13100c;
+  --panel: #1a1510;
+  --panel2: #221c14;
+  --border: #3a2e1e;
+  --border2: #4a3c26;
+  --gold: #c9a84c;
+  --gold2: #e8c96a;
+  --gold-glow: rgba(201,168,76,0.3);
+  --red: #8b2020;
+  --red2: #c0392b;
+  --green: #2d6a4f;
+  --green2: #40916c;
+  --blue: #1a3a5c;
+  --blue2: #2980b9;
+  --text: #d4c9b0;
+  --text2: #a09070;
+  --white: #f0e8d0;
+  --muted: #6a5a40;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Crimson Pro', serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background: 
+    radial-gradient(ellipse at 20% 50%, rgba(201,168,76,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(139,32,32,0.05) 0%, transparent 40%),
+    url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:0;
+}
+
+/* NAV */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(13,11,8,0.95);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.nav-logo {
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--gold);
+  padding: 14px 20px 14px 0;
+  border-right: 1px solid var(--border);
+  margin-right: 8px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--gold-glow);
+}
+
+.nav-logo span { color: var(--text2); font-weight: 400; font-size: 14px; }
+
+.nav-tabs {
+  display: flex;
+  flex: 1;
+  overflow-x: auto;
+}
+
+.nav-tab {
+  padding: 16px 20px;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.nav-tab:hover { color: var(--text); }
+.nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* MAIN */
+.main {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+.page { display: none; }
+.page.active { display: block; }
+
+/* SECTION TITLE */
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 3px;
+  margin-bottom: 6px;
+  text-shadow: 0 0 30px var(--gold-glow);
+}
+
+.section-sub {
+  color: var(--muted);
+  font-size: 15px;
+  font-style: italic;
+  margin-bottom: 30px;
+}
+
+/* DADOS PAGE */
+.dice-arena {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 30px;
+  margin-bottom: 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.dice-arena::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(201,168,76,0.05) 0%, transparent 70%);
+}
+
+.dice-result-display {
+  position: relative;
+  z-index: 1;
+}
+
+.dice-total {
+  font-family: 'Cinzel', serif;
+  font-size: 100px;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+  text-shadow: 0 0 60px var(--gold-glow), 0 0 120px rgba(201,168,76,0.2);
+  transition: all 0.3s;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dice-total.critical { color: #ffd700; text-shadow: 0 0 60px rgba(255,215,0,0.8); animation: critical-pulse 0.5s ease; }
+.dice-total.fumble { color: var(--red2); text-shadow: 0 0 60px rgba(192,57,43,0.8); animation: shake 0.5s ease; }
+
+@keyframes critical-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+@keyframes roll-in {
+  0% { transform: scale(0.5) rotate(-20deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.dice-total.rolling { animation: roll-in 0.3s ease; }
+
+.dice-breakdown {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 8px;
+  min-height: 20px;
+}
+
+.dice-label {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 3px;
+  margin-top: 6px;
+}
+
+/* DICE GRID */
+.dice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.die-btn {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 16px 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 1px;
+}
+
+.die-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(201,168,76,0.1) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.die-btn:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
+.die-btn:hover::before { opacity: 1; }
+.die-btn:active { transform: translateY(0); }
+.die-btn.selected { border-color: var(--gold); background: rgba(201,168,76,0.1); color: var(--gold); }
+
+.die-icon {
+  font-size: 24px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* CONTROLS */
+.dice-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.ctrl-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ctrl-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 2px;
+}
+
+.ctrl-input {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--white);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  padding: 8px 12px;
+  width: 70px;
+  text-align: center;
+}
+
+.ctrl-input:focus { outline: none; border-color: var(--gold); }
+
+.btn {
+  padding: 10px 24px;
+  border: 1px solid;
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: none;
+}
+
+.btn-gold { border-color: var(--gold); color: var(--gold); }
+.btn-gold:hover { background: var(--gold); color: var(--bg); }
+.btn-red { border-color: var(--red2); color: var(--red2); }
+.btn-red:hover { background: var(--red2); color: var(--white); }
+.btn-green { border-color: var(--green2); color: var(--green2); }
+.btn-green:hover { background: var(--green2); color: var(--white); }
+
+.roll-btn {
+  padding: 14px 40px;
+  background: linear-gradient(135deg, var(--gold), #a8873a);
+  border: none;
+  color: var(--bg);
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(201,168,76,0.3);
+}
+
+.roll-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(201,168,76,0.5); }
+.roll-btn:active { transform: translateY(0); }
+
+/* HISTORY */
+.roll-history {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.history-title {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 3px;
+  margin-bottom: 10px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+}
+
+.history-item:last-child { border-bottom: none; }
+.history-dice { color: var(--text2); }
+.history-result { color: var(--gold); font-size: 16px; font-weight: 700; }
+.history-rolls { color: var(--muted); font-size: 10px; }
+.h-crit { color: #ffd700; }
+.h-fumble { color: var(--red2); }
+
+/* FICHAS PAGE */
+.fichas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.fichas-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ficha-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.ficha-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.ficha-card.dnd::before { background: var(--red2); }
+.ficha-card.tormenta::before { background: #8b4513; }
+.ficha-card.op::before { background: var(--red); }
+
+.ficha-card:hover { border-color: var(--gold); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+
+.ficha-card-system {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.ficha-card-name {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+
+.ficha-card-class {
+  font-size: 13px;
+  color: var(--text2);
+  font-style: italic;
+}
+
+.ficha-card-attrs {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.mini-attr {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  color: var(--text2);
+}
+
+.ficha-card-del {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.ficha-card:hover .ficha-card-del { opacity: 1; }
+.ficha-card-del:hover { color: var(--red2); }
+
+/* MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 200;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  width: 100%;
+  max-width: 700px;
+  margin: auto;
+  position: relative;
+}
+
+.modal-header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+
+.modal-close {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 10px;
+  transition: all 0.2s;
+}
+
+.modal-close:hover { border-color: var(--red2); color: var(--red2); }
+
+.modal-body { padding: 24px; }
+
+/* FORM */
+.form-section {
+  margin-bottom: 24px;
+}
+
+.form-section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  color: var(--gold);
+  letter-spacing: 3px;
+  margin-bottom: 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
+
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+
+.form-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.form-input, .form-select {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--white);
+  font-family: 'Crimson Pro', serif;
+  font-size: 15px;
+  padding: 8px 12px;
+  transition: border-color 0.2s;
+  width: 100%;
+  -webkit-appearance: none;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.form-select option { background: var(--panel2); }
+
+/* ATRIBUTOS */
+.attrs-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+.attr-input-group {
+  text-align: center;
+}
+
+.attr-input-label {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.attr-input {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--white);
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  font-weight: 700;
+  padding: 10px 4px;
+  text-align: center;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.attr-input:focus { outline: none; border-color: var(--gold); color: var(--gold); }
+
+.attr-mod {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--gold);
+  margin-top: 3px;
+  display: block;
+}
+
+/* DERIVED STATS */
+.derived-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.derived-stat {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 10px;
+  text-align: center;
+}
+
+.derived-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.derived-value {
+  font-family: 'Cinzel', serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+/* MODAL FOOTER */
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: var(--panel);
+}
+
+/* CAMPANHA PAGE */
+.campaign-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.campaign-sidebar {}
+
+.campaign-section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.campaign-section-header {
+  background: var(--panel2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.campaign-section-body { padding: 14px; }
+
+/* MONSTER CARD */
+.monster-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.monster-item:last-child { border-bottom: none; }
+.monster-item:hover { padding-left: 4px; }
+
+.monster-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.monster-name {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  color: var(--white);
+  flex: 1;
+}
+
+.monster-hp {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--red2);
+}
+
+/* MAP */
+.map-area {
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+
+.map-toolbar {
+  background: var(--panel2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.map-tool-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 1px;
+}
+
+.map-tool-btn:hover, .map-tool-btn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(201,168,76,0.08);
+}
+
+#mapCanvas {
+  display: block;
+  cursor: crosshair;
+  width: 100%;
+}
+
+/* INITIATIVE */
+.initiative-list { display: flex; flex-direction: column; gap: 6px; }
+
+.init-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+
+.init-item.active {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.06);
+}
+
+.init-order {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold);
+  min-width: 28px;
+  text-align: center;
+}
+
+.init-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.init-hp-bar {
+  width: 80px;
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 0;
+}
+
+.init-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--red), var(--red2));
+  transition: width 0.3s;
+}
+
+.init-hp-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text2);
+  min-width: 50px;
+  text-align: right;
+}
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: var(--panel2);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  padding: 12px 20px;
+  z-index: 500;
+  letter-spacing: 1px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s;
+  pointer-events: none;
+}
+
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+
+.empty-icon { font-size: 60px; margin-bottom: 16px; opacity: 0.4; }
+.empty-text { font-family: 'Cinzel', serif; font-size: 16px; letter-spacing: 2px; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+/* RESPONSIVE */
+@media (max-width: 700px) {
+  .attrs-grid { grid-template-columns: repeat(3, 1fr); }
+  .derived-grid { grid-template-columns: repeat(2, 1fr); }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-grid-3 { grid-template-columns: 1fr 1fr; }
+  .campaign-grid { grid-template-columns: 1fr; }
+  .dice-grid { grid-template-columns: repeat(4, 1fr); }
+  .dice-total { font-size: 70px; }
+}
+
+.badge-cr {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  padding: 2px 6px;
+  background: rgba(139,32,32,0.3);
+  border: 1px solid var(--red);
+  color: var(--red2);
+  letter-spacing: 1px;
+}
+
+.npc-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.tab-indicator {
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+  margin-left: 6px;
+  vertical-align: middle;
+  display: none;
+}
+.tab-indicator.visible { display: inline-block; }
+
+/* MACROS */
+.macros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.macro-btn {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  padding: 10px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  position: relative;
+}
+.macro-btn:hover { border-color: var(--gold); color: var(--gold); }
+.macro-btn .macro-name { display: block; font-weight: 700; margin-bottom: 2px; color: var(--white); font-family: 'Cinzel', serif; font-size: 11px; }
+.macro-btn .macro-formula { color: var(--gold); font-size: 10px; }
+.macro-del { position: absolute; top: 4px; right: 6px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 11px; opacity: 0; }
+.macro-btn:hover .macro-del { opacity: 1; }
+.macro-del:hover { color: var(--red2); }
+
+/* CONDIÇÕES */
+.conditions-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+.cond-tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.cond-tag.active { border-color: var(--red2); color: var(--red2); background: rgba(192,57,43,0.12); }
+
+/* FICHA TABS */
+.ficha-inner-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.ficha-inner-tab {
+  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 1px;
+  padding: 10px 16px; cursor: pointer; border: none; background: none;
+  color: var(--muted); border-bottom: 2px solid transparent; transition: all 0.2s;
+}
+.ficha-inner-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.ficha-inner-page { display: none; }
+.ficha-inner-page.active { display: block; }
+
+/* INVENTÁRIO */
+.inv-table { width: 100%; border-collapse: collapse; }
+.inv-table th { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 2px; padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+.inv-table td { padding: 7px 8px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 13px; }
+.inv-table tr:last-child td { border-bottom: none; }
+.inv-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* MAGIAS */
+.spell-slot-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; margin-bottom: 16px; }
+.spell-slot-col { text-align: center; }
+.spell-slot-label { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--muted); display: block; margin-bottom: 4px; }
+.spell-slot-box {
+  width: 100%; aspect-ratio: 1;
+  border: 1px solid var(--border);
+  background: var(--panel2);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Cinzel', serif; font-size: 14px; color: var(--gold);
+  display: flex; align-items: center; justify-content: center;
+}
+.spell-slot-box.used { background: var(--red-dark, #3a0f0f); border-color: var(--red); color: var(--red); }
+.spell-list { display: flex; flex-direction: column; gap: 6px; }
+.spell-item { background: var(--panel2); border: 1px solid var(--border); padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+.spell-level-badge { font-family: 'Share Tech Mono', monospace; font-size: 9px; padding: 2px 6px; background: rgba(201,168,76,0.15); border: 1px solid var(--gold); color: var(--gold); min-width: 24px; text-align: center; }
+.spell-name { font-weight: 600; color: var(--white); flex: 1; }
+.spell-school { font-size: 11px; color: var(--muted); font-style: italic; }
+
+/* XP BAR */
+.xp-bar-wrap { margin-top: 10px; }
+.xp-bar-track { height: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); margin-top: 4px; }
+.xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold2)); transition: width 0.5s ease; }
+.xp-label { display: flex; justify-content: space-between; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+/* OP TRACKER */
+.op-tracker {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.op-tracker-title {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  color: var(--red2);
+  letter-spacing: 3px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.op-tracker-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.op-resource {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  padding: 12px;
+}
+.op-resource-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.op-resource-bar {
+  height: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+  position: relative;
+  overflow: hidden;
+}
+.op-resource-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.op-resource-fill.pe { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+.op-resource-fill.san { background: linear-gradient(90deg, #2980b9, #3498db); }
+.op-resource-fill.san.low { background: linear-gradient(90deg, #e67e22, #f39c12); }
+.op-resource-fill.san.critical { background: linear-gradient(90deg, #c0392b, #e74c3c); animation: pulse-red 1s infinite; }
+@keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.op-resource-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.op-res-btn {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  font-weight: 700;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.op-res-btn:hover { border-color: var(--gold); color: var(--gold); }
+.op-res-btn.minus:hover { border-color: var(--red2); color: var(--red2); }
+.op-res-val {
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--white);
+  min-width: 40px;
+  text-align: center;
+}
+.op-res-max {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+.nex-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 3px 8px;
+  background: rgba(192,57,43,0.15);
+  border: 1px solid var(--red2);
+  color: var(--red2);
+  letter-spacing: 1px;
+}
+.exposure-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  margin-top: 6px;
+}
+.exposure-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--red), #ff4444);
+  transition: width 0.5s ease;
+}
+
+/* COMBAT LOG */
+.combat-log {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  max-height: 260px;
+  overflow-y: auto;
+}
+.combat-log-header {
+  background: var(--panel2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.log-entry {
+  padding: 6px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.log-entry:last-child { border-bottom: none; }
+.log-turn { color: var(--muted); min-width: 50px; }
+.log-text { color: var(--text); flex: 1; line-height: 1.5; }
+.log-entry.damage .log-text { color: var(--red2); }
+.log-entry.heal .log-text { color: var(--green2); }
+.log-entry.crit .log-text { color: #ffd700; }
+.log-entry.death .log-text { color: var(--muted); text-decoration: line-through; }
+.log-entry.turn .log-text { color: var(--gold); font-weight: 700; }
+.log-entry.san .log-text { color: #3498db; }
+
+/* LOOT */
+.loot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.loot-item {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  padding: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.loot-item::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.loot-item.comum::before { background: var(--muted); }
+.loot-item.incomum::before { background: #27ae60; }
+.loot-item.raro::before { background: #2980b9; }
+.loot-item.muito-raro::before { background: #8e44ad; }
+.loot-item.lendario::before { background: var(--gold); }
+.loot-rarity {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+}
+.loot-rarity.comum { color: var(--muted); }
+.loot-rarity.incomum { color: #27ae60; }
+.loot-rarity.raro { color: #2980b9; }
+.loot-rarity.muito-raro { color: #8e44ad; }
+.loot-rarity.lendario { color: var(--gold); }
+.loot-name {
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+.loot-desc { font-size: 11px; color: var(--text2); line-height: 1.5; }
+.loot-value { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--gold); margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">🎲 RPG <span>TAVERN</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dados')">⚄ DADOS</button>
+    <button class="nav-tab" onclick="showPage('fichas')">📜 FICHAS</button>
+    <button class="nav-tab" onclick="showPage('campanha')">🗺️ CAMPANHA</button>
+    <button class="nav-tab" onclick="showPage('bestiario')">💀 BESTIÁRIO</button>
+    <button class="nav-tab" onclick="showPage('nomes')">🎲 NOMES</button>
+    <button class="nav-tab" onclick="showPage('loot')">💰 LOOT</button>
+    <button class="nav-tab" onclick="showPage('op')">🔮 ORDEM</button>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ===== DADOS ===== -->
+<div class="page active" id="page-dados">
+  <div class="section-title">Mesa de Dados</div>
+  <div class="section-sub">Role os dados do destino</div>
+
+  <div class="dice-arena">
+    <div class="dice-result-display">
+      <div class="dice-total" id="diceTotal">–</div>
+      <div class="dice-breakdown" id="diceBreakdown"></div>
+      <div class="dice-label" id="diceLabel">Escolha um dado para começar</div>
+    </div>
+  </div>
+
+  <div class="dice-grid">
+    <button class="die-btn" onclick="selectDie(4)"><span class="die-icon">◇</span>d4</button>
+    <button class="die-btn selected" onclick="selectDie(6)"><span class="die-icon">⬡</span>d6</button>
+    <button class="die-btn" onclick="selectDie(8)"><span class="die-icon">◈</span>d8</button>
+    <button class="die-btn" onclick="selectDie(10)"><span class="die-icon">◉</span>d10</button>
+    <button class="die-btn" onclick="selectDie(12)"><span class="die-icon">⬟</span>d12</button>
+    <button class="die-btn" onclick="selectDie(20)"><span class="die-icon">🎲</span>d20</button>
+    <button class="die-btn" onclick="selectDie(100)"><span class="die-icon">💯</span>d100</button>
+  </div>
+
+  <div class="dice-controls">
+    <div class="ctrl-group">
+      <span class="ctrl-label">QUANTIDADE</span>
+      <input type="number" class="ctrl-input" id="diceQty" value="1" min="1" max="20">
+    </div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">MODIFICADOR</span>
+      <input type="number" class="ctrl-input" id="diceMod" value="0" min="-20" max="50">
+    </div>
+    <div class="ctrl-group" style="justify-content:flex-end;">
+      <span class="ctrl-label">MODO</span>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-gold" id="modeNormal" onclick="setMode('normal')" style="font-size:11px;padding:8px 14px;">Normal</button>
+        <button class="btn" id="modeAdv" onclick="setMode('advantage')" style="font-size:11px;padding:8px 14px;border-color:var(--green2);color:var(--green2);">Vantagem</button>
+        <button class="btn" id="modeDis" onclick="setMode('disadvantage')" style="font-size:11px;padding:8px 14px;border-color:var(--red2);color:var(--red2);">Desvantagem</button>
+      </div>
+    </div>
+    <button class="roll-btn" onclick="rollDice()" style="margin-left:auto;">ROLAR</button>
+  </div>
+
+  <!-- MACROS -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold);letter-spacing:2px;">// MACROS SALVAS</div>
+    <button class="btn btn-gold" style="font-size:10px;padding:6px 14px;" onclick="openMacroModal()">+ NOVA MACRO</button>
+  </div>
+  <div class="macros-grid" id="macrosGrid">
+    <div style="color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:11px;grid-column:1/-1;">Nenhuma macro salva. Crie atalhos de rolagem!</div>
+  </div>
+
+  <div class="roll-history">
+    <div class="history-title">// HISTÓRICO DE ROLAGENS</div>
+    <div id="rollHistory"><div style="color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:11px;">Nenhuma rolagem ainda...</div></div>
+  </div>
+</div>
+
+<!-- ===== FICHAS ===== -->
+<div class="page" id="page-fichas">
+  <div class="fichas-header">
+    <div>
+      <div class="section-title">Fichas de Personagem</div>
+      <div class="section-sub">Gerencie seus aventureiros</div>
+    </div>
+    <button class="btn btn-gold" onclick="openNewFichaModal()">+ NOVA FICHA</button>
+  </div>
+
+  <div class="fichas-list" id="fichasList">
+    <div class="empty-state" style="grid-column:1/-1;">
+      <div class="empty-icon">📜</div>
+      <div class="empty-text">Nenhuma ficha criada</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:8px;">Clique em "Nova Ficha" para começar</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CAMPANHA ===== -->
+<div class="page" id="page-campanha">
+  <div class="section-title">Mesa de Campanha</div>
+  <div class="section-sub">Gerencie sua sessão</div>
+
+  <div class="campaign-grid">
+    <div class="campaign-sidebar">
+
+      <!-- INICIATIVA -->
+      <div class="campaign-section">
+        <div class="campaign-section-header">
+          ⚔️ INICIATIVA
+          <button class="map-tool-btn" onclick="openInitiativeModal()">+ ADD</button>
+        </div>
+        <div class="campaign-section-body">
+          <div class="initiative-list" id="initiativeList">
+            <div style="color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:11px;">Nenhum combatente na fila</div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;">
+            <button class="btn btn-gold" onclick="nextTurn()" style="flex:1;font-size:11px;padding:8px;">PRÓXIMO</button>
+            <button class="btn btn-red" onclick="clearInitiative()" style="font-size:11px;padding:8px 12px;">LIMPAR</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTAS -->
+      <div class="campaign-section">
+        <div class="campaign-section-header">📋 NOTAS DA SESSÃO</div>
+        <div class="campaign-section-body">
+          <textarea id="sessionNotes" style="width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:'Crimson Pro',serif;font-size:14px;padding:10px;resize:vertical;min-height:120px;" placeholder="Anotações da sessão..."></textarea>
+        </div>
+      </div>
+
+      <!-- OP TRACKER -->
+      <div class="campaign-section">
+        <div class="campaign-section-header">
+          🔮 TRACKER DE AGENTE
+          <select id="trackerAgentSelect" onchange="loadTrackerAgent()" style="background:var(--panel);border:1px solid var(--border);color:var(--text);font-size:10px;padding:2px 6px;font-family:'Share Tech Mono',monospace;">
+            <option value="">— Selecionar —</option>
+          </select>
+        </div>
+        <div class="campaign-section-body">
+          <!-- PE -->
+          <div class="op-resource" style="margin-bottom:10px;">
+            <div class="op-resource-label">
+              <span>PONTOS DE ESFORÇO</span>
+              <span id="peDisplay" style="color:var(--green2);font-size:12px;">2 / 2</span>
+            </div>
+            <div class="op-resource-bar"><div class="op-resource-fill pe" id="peBar" style="width:100%"></div></div>
+            <div class="op-resource-controls">
+              <button class="op-res-btn minus" onclick="changeResource('pe',-1)">−</button>
+              <span class="op-res-val" id="peVal">2</span>
+              <button class="op-res-btn" onclick="changeResource('pe',1)">+</button>
+              <span class="op-res-max">/ <span id="peMax">2</span></span>
+              <button class="op-res-btn" onclick="restoreResource('pe')" style="font-size:10px;width:auto;padding:0 8px;margin-left:auto;font-family:'Share Tech Mono',monospace;">RESTAURAR</button>
+            </div>
+          </div>
+          <!-- SANIDADE -->
+          <div class="op-resource" style="margin-bottom:10px;">
+            <div class="op-resource-label">
+              <span>SANIDADE</span>
+              <span id="sanDisplay" style="color:var(--blue2);font-size:12px;">12 / 12</span>
+            </div>
+            <div class="op-resource-bar"><div class="op-resource-fill san" id="sanBar" style="width:100%"></div></div>
+            <div class="op-resource-controls">
+              <button class="op-res-btn minus" onclick="changeResource('san',-1)">−</button>
+              <span class="op-res-val" id="sanVal">12</span>
+              <button class="op-res-btn" onclick="changeResource('san',1)">+</button>
+              <span class="op-res-max">/ <span id="sanMax">12</span></span>
+              <button class="op-res-btn" onclick="rollPanic()" style="font-size:9px;width:auto;padding:0 8px;margin-left:auto;font-family:'Share Tech Mono',monospace;border-color:var(--red2);color:var(--red2);">PÂNICO</button>
+            </div>
+          </div>
+          <!-- EXPOSIÇÃO PARANORMAL -->
+          <div style="background:var(--panel2);border:1px solid var(--border);padding:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;">EXPOSIÇÃO PARANORMAL</span>
+              <span class="nex-badge" id="nexBadge">NEX 5%</span>
+            </div>
+            <div class="exposure-bar"><div class="exposure-fill" id="exposureBar" style="width:5%"></div></div>
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button class="op-res-btn minus" onclick="changeExposure(-5)" style="font-size:10px;width:auto;padding:0 8px;font-family:'Share Tech Mono',monospace;">-5%</button>
+              <button class="op-res-btn" onclick="changeExposure(5)" style="font-size:10px;width:auto;padding:0 8px;font-family:'Share Tech Mono',monospace;">+5%</button>
+              <span style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--red2);margin-left:auto;" id="exposureVal">5%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMBAT LOG -->
+      <div class="campaign-section">
+        <div class="campaign-section-header">📋 NOTAS DA SESSÃO</div>
+        <div class="campaign-section-body">
+          <textarea id="sessionNotes" style="width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:'Crimson Pro',serif;font-size:14px;padding:10px;resize:vertical;min-height:80px;" placeholder="Anotações da sessão..."></textarea>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MAPA -->
+    <div class="map-area">
+      <div class="map-toolbar">
+        <span style="font-family:'Cinzel',serif;font-size:10px;color:var(--muted);letter-spacing:2px;">MAPA:</span>
+        <button class="map-tool-btn" id="tool-move" onclick="setMapTool('move')">✋ Mover</button>
+        <button class="map-tool-btn active" id="tool-token" onclick="setMapTool('token')">🧑 Token</button>
+        <button class="map-tool-btn" id="tool-wall" onclick="setMapTool('wall')">🧱 Parede</button>
+        <button class="map-tool-btn" id="tool-ruler" onclick="setMapTool('ruler')">📏 Régua</button>
+        <button class="map-tool-btn" id="tool-erase" onclick="setMapTool('erase')">🧹 Apagar</button>
+        <button class="map-tool-btn" onclick="loadMapBackground()">🖼️ Imagem</button>
+        <button class="map-tool-btn" onclick="clearMap()">🗑️ Limpar</button>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+          <span class="ctrl-label">GRADE:</span>
+          <input type="number" id="gridSize" value="40" min="20" max="80" style="width:55px;" class="ctrl-input" oninput="drawMap()">
+        </div>
+      </div>
+      <canvas id="mapCanvas" width="760" height="500"></canvas>
+    </div>
+
+    <!-- COMBAT LOG (full width below map) -->
+    <div style="grid-column:1/-1;margin-top:0;">
+      <div class="combat-log">
+        <div class="combat-log-header">
+          ⚔️ LOG DE COMBATE
+          <button onclick="clearCombatLog()" style="background:none;border:1px solid var(--border);color:var(--muted);font-size:10px;padding:3px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;">LIMPAR</button>
+        </div>
+        <div id="combatLog">
+          <div class="log-entry"><span class="log-turn">—</span><span class="log-text" style="color:var(--muted);font-style:italic;">O combate ainda não começou...</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BESTIÁRIO ===== -->
+<div class="page" id="page-bestiario">
+  <div class="fichas-header">
+    <div>
+      <div class="section-title">Bestiário</div>
+      <div class="section-sub">Criaturas, monstros e NPCs</div>
+    </div>
+    <button class="btn btn-red" onclick="openNewMonsterModal()">+ NOVA CRIATURA</button>
+  </div>
+  <div class="fichas-list" id="monsterList">
+    <div class="empty-state" style="grid-column:1/-1;">
+      <div class="empty-icon">💀</div>
+      <div class="empty-text">Bestiário vazio</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:8px;">Adicione criaturas para a campanha</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NOMES ===== -->
+<div class="page" id="page-nomes">
+  <div class="section-title">Gerador de Nomes</div>
+  <div class="section-sub">Nomes para personagens, NPCs e criaturas</div>
+
+  <div style="background:var(--panel);border:1px solid var(--border);padding:20px;margin-bottom:20px;">
+    <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;">
+      <div class="ctrl-group">
+        <span class="ctrl-label">RAÇA</span>
+        <select class="form-select" id="nameGenRace" style="width:160px;">
+          <option value="humano">Humano</option>
+          <option value="elfo">Elfo</option>
+          <option value="anao">Anão</option>
+          <option value="halfling">Halfling</option>
+          <option value="goblin">Goblin</option>
+          <option value="tiefling">Tiefling</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label">GÊNERO</span>
+        <select class="form-select" id="nameGenGender" style="width:140px;">
+          <option value="mixed">Ambos</option>
+          <option value="male">Masculino</option>
+          <option value="female">Feminino</option>
+        </select>
+      </div>
+      <button class="roll-btn" onclick="generateNames()" style="padding:12px 30px;font-size:14px;">GERAR NOMES</button>
+    </div>
+  </div>
+
+  <div class="macros-grid" id="nameResults">
+    <div style="color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:11px;grid-column:1/-1;">Clique em "Gerar Nomes" para começar</div>
+  </div>
+
+  <div style="margin-top:20px;background:var(--panel);border:1px solid var(--border);padding:20px;">
+    <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold);letter-spacing:2px;margin-bottom:14px;">// GERADOR DE TAVERNAS & LOCAIS</div>
+    <button class="btn btn-gold" onclick="generateTavern()" style="margin-bottom:14px;">🍺 GERAR TAVERNA</button>
+    <div id="tavernResult" style="font-size:15px;color:var(--text);line-height:2;"></div>
+  </div>
+</div>
+
+<!-- ===== LOOT ===== -->
+<div class="page" id="page-loot">
+  <div class="section-title">Gerador de Loot</div>
+  <div class="section-sub">Tesouros, recompensas e itens paranormais</div>
+
+  <div style="background:var(--panel);border:1px solid var(--border);padding:20px;margin-bottom:20px;">
+    <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;">
+      <div class="ctrl-group">
+        <span class="ctrl-label">SISTEMA</span>
+        <select class="form-select" id="lootSystem" style="width:160px;" onchange="updateLootOptions()">
+          <option value="generic">Genérico / D&D</option>
+          <option value="op">Ordem Paranormal</option>
+          <option value="tormenta">Tormenta20</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label">NÍVEL / AMEAÇA</span>
+        <select class="form-select" id="lootLevel" style="width:140px;">
+          <option value="1">Baixo (1-4)</option>
+          <option value="2">Médio (5-10)</option>
+          <option value="3">Alto (11-16)</option>
+          <option value="4">Épico (17+)</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label">QUANTIDADE</span>
+        <input type="number" class="ctrl-input" id="lootQty" value="4" min="1" max="12" style="width:70px;">
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label">TIPO</span>
+        <select class="form-select" id="lootType" style="width:160px;">
+          <option value="mixed">Misto</option>
+          <option value="weapon">Armas</option>
+          <option value="armor">Armaduras/Proteções</option>
+          <option value="potion">Poções/Consumíveis</option>
+          <option value="treasure">Ouro e Joias</option>
+          <option value="magic">Itens Mágicos/Paranormais</option>
+        </select>
+      </div>
+      <button class="roll-btn" onclick="generateLoot()" style="padding:12px 30px;font-size:14px;">🎲 GERAR LOOT</button>
+    </div>
+  </div>
+
+  <div id="lootResults">
+    <div class="empty-state">
+      <div class="empty-icon">💰</div>
+      <div class="empty-text">Gere loot para sua sessão</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ORDEM PARANORMAL ===== -->
+<div class="page" id="page-op">
+  <div class="section-title">Ordem Paranormal</div>
+  <div class="section-sub">Referência completa do sistema</div>
+
+  <!-- INNER TABS -->
+  <div class="ficha-inner-tabs" style="margin-bottom:24px;">
+    <button class="ficha-inner-tab active" onclick="switchOPTab('nex',this)">📊 NEX & Patentes</button>
+    <button class="ficha-inner-tab" onclick="switchOPTab('classes',this)">⚔️ Classes & Trilhas</button>
+    <button class="ficha-inner-tab" onclick="switchOPTab('elementos',this)">🔮 Elementos</button>
+    <button class="ficha-inner-tab" onclick="switchOPTab('pericias',this)">🎯 Perícias</button>
+    <button class="ficha-inner-tab" onclick="switchOPTab('origens',this)">👤 Origens</button>
+    <button class="ficha-inner-tab" onclick="switchOPTab('entidades',this)">💀 Entidades</button>
+  </div>
+
+  <!-- NEX -->
+  <div class="ficha-inner-page active" id="optab-nex">
+    <div style="margin-bottom:20px;background:var(--panel);border:1px solid var(--border);padding:16px;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;">O NEX (Nível de Exposição ao Paranormal) determina o poder e a patente do agente.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;" id="nexTable"></div>
+    </div>
+  </div>
+
+  <!-- CLASSES & TRILHAS -->
+  <div class="ficha-inner-page" id="optab-classes">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;" id="classesGrid"></div>
+  </div>
+
+  <!-- ELEMENTOS -->
+  <div class="ficha-inner-page" id="optab-elementos">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;" id="elementosGrid"></div>
+  </div>
+
+  <!-- PERÍCIAS -->
+  <div class="ficha-inner-page" id="optab-pericias">
+    <div style="background:var(--panel);border:1px solid var(--border);padding:20px;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:16px;">
+        Todas as perícias do sistema. Cada perícia é vinculada a um atributo base.
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;" id="periciasGrid"></div>
+    </div>
+  </div>
+
+  <!-- ORIGENS -->
+  <div class="ficha-inner-page" id="optab-origens">
+    <div style="background:var(--panel);border:1px solid var(--border);padding:20px;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:16px;">
+        A origem define o background do agente e concede habilidades iniciais.
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;" id="origensGrid"></div>
+    </div>
+  </div>
+
+  <!-- ENTIDADES -->
+  <div class="ficha-inner-page" id="optab-entidades">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;" id="entidadesGrid"></div>
+  </div>
+</div>
+
+</div><!-- end main -->
+
+<!-- ===== MODAIS ===== -->
+
+<!-- MODAL NOVA FICHA -->
+<div class="modal-overlay" id="fichaModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="fichaModalTitle">Nova Ficha</div>
+      <button class="modal-close" onclick="closeModal('fichaModal')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-section">
+        <div class="form-section-title">// SISTEMA & IDENTIDADE</div>
+        <div class="form-grid" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label">Sistema</label>
+            <select class="form-select" id="fSystem" onchange="updateSystemOptions()">
+              <option value="dnd5e">D&D 5e</option>
+              <option value="tormenta20">Tormenta20</option>
+              <option value="op">Ordem Paranormal</option>
+              <option value="generic">Genérico</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nome do Personagem</label>
+            <input type="text" class="form-input" id="fName" placeholder="Nome do aventureiro">
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Raça / Origem</label>
+            <select class="form-select" id="fRace"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Classe</label>
+            <select class="form-select" id="fClass" onchange="updateSubclasses()"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subclasse</label>
+            <select class="form-select" id="fSubclass"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nível / NEX</label>
+            <input type="number" class="form-input" id="fLevel" value="1" min="1" max="20" oninput="calcDerived()">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">// ATRIBUTOS <span style="font-size:10px;color:var(--muted);font-family:'Share Tech Mono',monospace;">(clique para editar)</span></div>
+        <div class="attrs-grid" id="attrsGrid"></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">// ESTATÍSTICAS DERIVADAS</div>
+        <div class="derived-grid" id="derivedGrid"></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">// BACKGROUND</div>
+        <div class="form-grid" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label">Jogador</label>
+            <input type="text" class="form-input" id="fPlayer" placeholder="Nome do jogador">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Idade</label>
+            <input type="number" class="form-input" id="fAge" placeholder="Idade">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Histórico</label>
+          <textarea class="form-input" id="fBackground" rows="3" style="resize:vertical;" placeholder="Breve história do personagem..."></textarea>
+        </div>
+      </div>
+
+      <!-- EXTRA TABS: Inventário, Magias, XP -->
+      <div class="ficha-inner-tabs">
+        <button class="ficha-inner-tab active" onclick="switchFichaTab('inventario', this)">🎒 Inventário</button>
+        <button class="ficha-inner-tab" onclick="switchFichaTab('magias', this)">✨ Magias</button>
+        <button class="ficha-inner-tab" onclick="switchFichaTab('xp', this)">⭐ XP</button>
+      </div>
+
+      <!-- INVENTÁRIO -->
+      <div class="ficha-inner-page active" id="ftab-inventario">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);">CARGA: <span id="invWeight">0</span> / <span id="invMax">15</span> kg</span>
+          <button class="btn btn-gold" style="font-size:10px;padding:5px 12px;" onclick="addInventoryItem()">+ ITEM</button>
+        </div>
+        <table class="inv-table">
+          <thead><tr><th>ITEM</th><th>QTD</th><th>PESO</th><th>VALOR</th><th></th></tr></thead>
+          <tbody id="inventoryBody"><tr><td colspan="5" style="color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:11px;padding:12px 8px;">Inventário vazio</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- MAGIAS -->
+      <div class="ficha-inner-page" id="ftab-magias">
+        <div style="margin-bottom:12px;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:8px;">SLOTS DE MAGIA</div>
+          <div class="spell-slot-grid" id="spellSlots"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;">MAGIAS CONHECIDAS</div>
+          <button class="btn btn-gold" style="font-size:10px;padding:5px 12px;" onclick="addSpell()">+ MAGIA</button>
+        </div>
+        <div class="spell-list" id="spellList"><div style="color:var(--muted);font-size:13px;font-style:italic;">Nenhuma magia registrada</div></div>
+      </div>
+
+      <!-- XP -->
+      <div class="ficha-inner-page" id="ftab-xp">
+        <div class="form-grid" style="margin-bottom:16px;">
+          <div class="form-group">
+            <label class="form-label">XP Atual</label>
+            <input type="number" class="form-input" id="fXP" value="0" min="0" oninput="updateXPBar()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nível Atual</label>
+            <input type="number" class="form-input" id="fXPLevel" value="1" min="1" max="20" readonly style="opacity:0.6;">
+          </div>
+        </div>
+        <div class="xp-bar-wrap">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;">PROGRESSO PARA PRÓXIMO NÍVEL</div>
+          <div class="xp-bar-track"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
+          <div class="xp-label"><span id="xpCurrent">0 XP</span><span id="xpNext">300 XP</span></div>
+        </div>
+        <div style="margin-top:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;" id="xpMilestones"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-red" onclick="closeModal('fichaModal')">CANCELAR</button>
+      <button class="btn btn-gold" onclick="saveFicha()">SALVAR FICHA</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MONSTER -->
+<div class="modal-overlay" id="monsterModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nova Criatura</div>
+      <button class="modal-close" onclick="closeModal('monsterModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">
+        <div class="form-section-title">// IDENTIDADE</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Nome</label>
+            <input type="text" class="form-input" id="mName" placeholder="Nome da criatura">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" id="mType">
+              <option>Besta</option><option>Morto-Vivo</option><option>Humanoide</option>
+              <option>Demônio</option><option>Entidade</option><option>Dragão</option>
+              <option>Construto</option><option>Fada</option><option>Celestial</option><option>NPC</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nível de Desafio / CR</label>
+            <input type="text" class="form-input" id="mCR" placeholder="Ex: 1/2, 1, 5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Emoji / Ícone</label>
+            <input type="text" class="form-input" id="mIcon" placeholder="💀" maxlength="2">
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">// ESTATÍSTICAS</div>
+        <div class="npc-form-grid">
+          <div class="form-group"><label class="form-label">PV Máx</label><input type="number" class="form-input" id="mHP" value="10"></div>
+          <div class="form-group"><label class="form-label">CA / Defesa</label><input type="number" class="form-input" id="mAC" value="10"></div>
+          <div class="form-group"><label class="form-label">Velocidade</label><input type="text" class="form-input" id="mSpeed" placeholder="9m"></div>
+          <div class="form-group"><label class="form-label">FOR</label><input type="number" class="form-input" id="mSTR" value="10"></div>
+          <div class="form-group"><label class="form-label">DES</label><input type="number" class="form-input" id="mDEX" value="10"></div>
+          <div class="form-group"><label class="form-label">CON</label><input type="number" class="form-input" id="mCON" value="10"></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">// ATAQUES & HABILIDADES</div>
+        <div class="form-group">
+          <label class="form-label">Ataques (1 por linha)</label>
+          <textarea class="form-input" id="mAttacks" rows="3" placeholder="Garra: +4 para acertar, 1d6+2 cortante&#10;Mordida: +5 para acertar, 1d8+3 perfurante"></textarea>
+        </div>
+        <div class="form-group" style="margin-top:10px;">
+          <label class="form-label">Habilidades Especiais</label>
+          <textarea class="form-input" id="mAbilities" rows="2" placeholder="Visão no Escuro, Resistência a magia..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-red" onclick="closeModal('monsterModal')">CANCELAR</button>
+      <button class="btn btn-gold" onclick="saveMonster()">SALVAR CRIATURA</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL INITIATIVE ADD -->
+<div class="modal-overlay" id="initModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Adicionar à Iniciativa</div>
+      <button class="modal-close" onclick="closeModal('initModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:14px;">
+        <label class="form-label">Nome</label>
+        <input type="text" class="form-input" id="initName" placeholder="Personagem ou monstro">
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Iniciativa</label>
+          <input type="number" class="form-input" id="initValue" placeholder="Rolagem">
+        </div>
+        <div class="form-group">
+          <label class="form-label">PV Máx</label>
+          <input type="number" class="form-input" id="initHP" value="10">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gold" onclick="addToInitiative()">ADICIONAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MACRO -->
+<div class="modal-overlay" id="macroModal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title">Nova Macro</div>
+      <button class="modal-close" onclick="closeModal('macroModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:14px;">
+        <label class="form-label">Nome da Macro</label>
+        <input type="text" class="form-input" id="macroName" placeholder="Ex: Ataque Espada">
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Quantidade de Dados</label>
+          <input type="number" class="form-input" id="macroQty" value="1" min="1" max="20">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo de Dado</label>
+          <select class="form-select" id="macroDie">
+            <option>4</option><option>6</option><option>8</option><option>10</option><option>12</option><option value="20" selected>20</option><option>100</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Modificador</label>
+          <input type="number" class="form-input" id="macroMod" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Modo</label>
+          <select class="form-select" id="macroMode">
+            <option value="normal">Normal</option>
+            <option value="advantage">Vantagem</option>
+            <option value="disadvantage">Desvantagem</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-red" onclick="closeModal('macroModal')">CANCELAR</button>
+      <button class="btn btn-gold" onclick="saveMacro()">SALVAR MACRO</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADD ITEM INVENTÁRIO -->
+<div class="modal-overlay" id="itemModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Adicionar Item</div>
+      <button class="modal-close" onclick="closeModal('itemModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:12px;">
+        <label class="form-label">Nome do Item</label>
+        <input type="text" class="form-input" id="itemName" placeholder="Espada Longa, Poção de Cura...">
+      </div>
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="form-label">Quantidade</label>
+          <input type="number" class="form-input" id="itemQty" value="1" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Peso (kg)</label>
+          <input type="number" class="form-input" id="itemWeight" value="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor (po)</label>
+          <input type="text" class="form-input" id="itemValue" placeholder="10po">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gold" onclick="saveInventoryItem()">ADICIONAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADD MAGIA -->
+<div class="modal-overlay" id="spellModal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title">Adicionar Magia</div>
+      <button class="modal-close" onclick="closeModal('spellModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" style="margin-bottom:12px;">
+        <div class="form-group">
+          <label class="form-label">Nome da Magia</label>
+          <input type="text" class="form-input" id="spellName" placeholder="Bola de Fogo">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Escola</label>
+          <select class="form-select" id="spellSchool">
+            <option>Evocação</option><option>Abjuração</option><option>Ilusão</option><option>Encantamento</option><option>Transmutação</option><option>Necromancia</option><option>Adivinhação</option><option>Conjuração</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nível (0=Truque)</label>
+          <input type="number" class="form-input" id="spellLevel" value="1" min="0" max="9">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dano/Efeito</label>
+          <input type="text" class="form-input" id="spellDmg" placeholder="8d6 fogo">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gold" onclick="saveSpell()">ADICIONAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== STATE =====
+const state = {
+  selectedDie: 6,
+  rollMode: 'normal',
+  rollHistory: [],
+  fichas: JSON.parse(localStorage.getItem('rpg_fichas') || '[]'),
+  monsters: JSON.parse(localStorage.getItem('rpg_monsters') || '[]'),
+  initiative: [],
+  currentTurn: 0,
+  editingFichaIndex: -1,
+  mapTool: 'token',
+  mapTokens: [],
+  mapWalls: [],
+  mapDrawing: false,
+  mapWallStart: null
+};
+
+// ===== SYSTEM DATA =====
+const SYSTEMS = {
+  dnd5e: {
+    attrs: ['FOR','DES','CON','INT','SAB','CAR'],
+    races: ['Humano','Elfo','Anão','Halfling','Gnomo','Meio-Elfo','Meio-Orc','Tiefling','Draconato','Aasimar','Tabaxi','Firbolg','Goliath','Kenku'],
+    classes: {
+      'Bárbaro': ['Caminho do Coração Selvagem','Caminho do Guerreiro Ancestral','Caminho da Besta','Caminho do Berserker','Caminho do Totem Guerreiro','Caminho do Zealot'],
+      'Bardo': ['Colégio do Conhecimento','Colégio da Bravura','Colégio da Criação','Colégio da Eloquência','Colégio dos Espadas','Colégio dos Sussurros'],
+      'Clérigo': ['Domínio da Vida','Domínio da Luz','Domínio das Tempestades','Domínio da Guerra','Domínio da Natureza','Domínio do Conhecimento','Domínio do Embuste','Domínio da Morte'],
+      'Druida': ['Círculo da Terra','Círculo da Lua','Círculo dos Esporos','Círculo das Estrelas','Círculo do Sonho','Círculo dos Incêndios'],
+      'Guerreiro': ['Arqueiro Arcano','Campeão','Cavaleiro Eldritch','Mestre de Batalha','Cavaleiro Rúnico','Samurai'],
+      'Ladino': ['Trapaceiro Arcano','Assassino','Ladrão','Fantasma','Inquisidor','Scout'],
+      'Mago': ['Abjuração','Conjuração','Adivinhação','Encantamento','Evocação','Ilusão','Necromancia','Transmutação','Cronomantica'],
+      'Monge': ['Caminho da Mão Aberta','Caminho da Sombra','Caminho dos Quatro Elementos','Caminho do Sol','Caminho do Dragão','Caminho da Alma Astral'],
+      'Paladino': ['Juramento da Devoção','Juramento dos Anciões','Juramento da Vingança','Juramento da Conquista','Juramento da Glória','Sem Juramento'],
+      'Patrulheiro': ['Caçador','Mestre das Bestas','Perseguidor de Horizontes','Patrulheiro do Enxame','Monstrador de Monstros'],
+      'Feiticeiro': ['Linhagem Dracônica','Magia Selvagem','Divina Alma','Sombra','Tempestade'],
+      'Bruxo': ['O Arquifada','O Grande Ancião','O Arquidemônio','O Celestial','O Gênio','Lâmina Hexblade'],
+      'Druida': ['Círculo da Terra','Círculo da Lua'],
+    },
+    derived: (attrs, level) => {
+      const mod = v => Math.floor((v - 10) / 2);
+      const pb = Math.ceil(level / 4) + 1;
+      const hp = 10 + (mod(attrs.CON||10) * level);
+      return { 'PV': hp, 'CA': 10 + mod(attrs.DES||10), 'Prof.': `+${pb}`, 'Iniciativa': mod(attrs.DES||10) >= 0 ? `+${mod(attrs.DES||10)}` : mod(attrs.DES||10) };
+    }
+  },
+  tormenta20: {
+    attrs: ['FOR','DES','CON','INT','SAB','CAR'],
+    races: ['Humano','Elfo','Anão','Halfling','Goblin','Dahllan','Minotauro','Qareen','Sereia','Sílfide','Lefou','Osteon','Aggelus','Hynne'],
+    classes: {
+      'Arcanista': ['Escola da Abjuração','Escola da Evocação','Escola da Ilusão','Escola da Transmutação','Escola da Necromancia','Devoto de Tenebra'],
+      'Bárbaro': ['Caminho da Destruição','Caminho da Fera','Caminho da Tundra'],
+      'Bardo': ['Colégio dos Bardos','Colégio da Espada','Colégio do Povo'],
+      'Bucaneiro': ['Capitão de Navio','Corsário','Pistoleiro'],
+      'Caçador': ['Caçador de Criaturas','Patrulheiro da Floresta','Guardião das Bestas'],
+      'Cavaleiro': ['Cavaleiro da Ordem','Cavaleiro Dragão','Cavaleiro da Morte'],
+      'Clérigo': ['Domínio da Batalha','Domínio da Morte','Domínio da Proteção','Domínio do Conhecimento','Domínio da Natureza'],
+      'Druida': ['Círculo da Terra','Círculo da Lua','Círculo do Mar'],
+      'Guerreiro': ['Mestre das Armas','Guerreiro Arcano','Lutador'],
+      'Inventor': ['Inventor Alquimista','Inventor Armador','Inventor Guerreiro'],
+      'Ladino': ['Assassino','Ladrão','Duelista'],
+      'Monge': ['Caminho do Dragão','Caminho da Sombra','Caminho das Quatro Estações'],
+      'Paladino': ['Paladino da Luz','Paladino das Sombras','Paladino do Mar'],
+    },
+    derived: (attrs, level) => {
+      const mod = v => Math.floor((v - 10) / 2);
+      return { 'PV': 8 + mod(attrs.CON||10) * level, 'Defesa': 10 + mod(attrs.DES||10), 'MP': level * (mod(attrs.INT||10) + 1), 'Iniciativa': mod(attrs.DES||10) };
+    }
+  },
+  op: {
+    attrs: ['FOR','AGI','INT','VIG','PRE'],
+    races: [
+      'Humano'
+    ],
+    origens: [
+      'Acadêmico','Amnésico','Artista','Atleta','Celebridade','Chef',
+      'Criminoso','Desgarrado','Detetive','Enfermeiro','Engenheiro',
+      'Empresário','Espião','Ex-militar','Hacker','Investigador',
+      'Jornalista','Lutador','Médico','Mercenário','Monge',
+      'Ocultista','Policial','Político','Religioso','Servidor Público',
+      'Soldado','Técnico','Trabalhador','Universitário'
+    ],
+    classes: {
+      'Combatente': [
+        'Guerreiro (NEX 10%)',
+        'Lutador (NEX 10%)',
+        'Atirador (NEX 10%)'
+      ],
+      'Especialista': [
+        'Investigador (NEX 10%)',
+        'Atirador (NEX 10%)',
+        'Condutor (NEX 10%)'
+      ],
+      'Ocultista': [
+        'Porta-Chamas (NEX 10%)',
+        'Lâmina Paranormal (NEX 10%)',
+        'Nexus (NEX 10%)'
+      ],
+    },
+    trilhas: {
+      'Combatente': {
+        'Guerreiro': ['Especialização em Armas','Resiliência','Ataque Giratório','Presença Intimidadora','Fúria de Combate','Mestre das Armas'],
+        'Lutador': ['Golpes Precisos','Desarme','Contra-ataque','Força Bruta','Mestre do Corpo a Corpo','Reflexos de Lutador'],
+        'Atirador': ['Mira Apurada','Tiro Rápido','Recuo','Olho de Águia','Atirador de Elite','Tiro Duplo'],
+      },
+      'Especialista': {
+        'Investigador': ['Mente Analítica','Interrogatório','Disfarce','Rastreamento','Perícia Criminal','Dedução Paranormal'],
+        'Atirador': ['Tiro Cirúrgico','Explosivos','Francatirador','Supressão','Arsenal Tático'],
+        'Condutor': ['Pilotagem Extrema','Rampa','Drift Paranormal','Veículo Blindado','Perseguição'],
+      },
+      'Ocultista': {
+        'Porta-Chamas': ['Chama Mínima','Escudo de Fogo','Explosão Ígnea','Chuva de Fogo','Inferno Paranormal','Avatar das Chamas'],
+        'Lâmina Paranormal': ['Lâmina Etérea','Corte Sombrio','Dança das Lâminas','Golpe Espectral','Lâmina da Morte','Ceifador'],
+        'Nexus': ['Âncora Paranormal','Transferência de PE','Escudo Coletivo','Vínculo Místico','Nexo Total','Coração da Ordem'],
+      }
+    },
+    elementos: {
+      'Morte': { cor: '#7b1a14', desc: 'Manipula a fronteira entre vida e morte. Rituais de necromancia, drenar energia vital e invocar mortos-vivos.', rituais: ['Drenar Vida','Invocar Morto','Toque da Morte','Escudo Necrótico','Visão da Morte','Ressurreição Parcial'] },
+      'Sangue': { cor: '#8b0000', desc: 'Controla o sangue e fluidos vitais. Rituais de sacrifício, cura e manipulação corporal.', rituais: ['Pulso Sanguíneo','Coágulo','Transfusão Paranormal','Armadura de Sangue','Hemorragia','Banho de Sangue'] },
+      'Conhecimento': { cor: '#1a3a5c', desc: 'Acessa informações ocultas e memórias. Rituais de visão, leitura mental e revelação.', rituais: ['Ler Mentes','Visão Remota','Biblioteca Akáshica','Memória Total','Precognição','Onisciência Limitada'] },
+      'Energia': { cor: '#8b6010', desc: 'Manipula energia paranormal bruta. Rituais de descarga elétrica, força cinética e escudos.', rituais: ['Descarga','Escudo Energético','Impulso Cinético','Tempestade de Energia','Absorção','Explosão Paranormal'] },
+      'Medo': { cor: '#4a1a6a', desc: 'Provoca e manipula o terror. Rituais de ilusão, pânico e pesadelos.', rituais: ['Induzir Medo','Pesadelo','Ilusão Aterrorizante','Grito do Outro Lado','Aura de Terror','O Último Medo'] },
+      'Trevas': { cor: '#1a1a2e', desc: 'Controla sombras e escuridão. Rituais de furtividade, cegueira e portais sombrios.', rituais: ['Manto das Sombras','Cegueira','Portal Sombrio','Devorar Luz','Forma das Trevas','Vácuo'] },
+    },
+    nexLevels: [
+      { nex: '5%', patente: 'Recruta', pv: 20, pe: 2, san: 12 },
+      { nex: '10%', patente: 'Agente', pv: 24, pe: 3, san: 14 },
+      { nex: '15%', patente: 'Agente', pv: 28, pe: 4, san: 14 },
+      { nex: '20%', patente: 'Agente Especial', pv: 32, pe: 5, san: 16 },
+      { nex: '25%', patente: 'Agente Especial', pv: 36, pe: 6, san: 16 },
+      { nex: '30%', patente: 'Agente Sênior', pv: 40, pe: 7, san: 18 },
+      { nex: '35%', patente: 'Agente Sênior', pv: 44, pe: 8, san: 18 },
+      { nex: '40%', patente: 'Veterano', pv: 48, pe: 9, san: 20 },
+      { nex: '45%', patente: 'Veterano', pv: 52, pe: 10, san: 20 },
+      { nex: '50%', patente: 'Especialista', pv: 56, pe: 12, san: 22 },
+      { nex: '55%', patente: 'Especialista', pv: 60, pe: 13, san: 22 },
+      { nex: '60%', patente: 'Operativo', pv: 64, pe: 14, san: 24 },
+      { nex: '65%', patente: 'Operativo', pv: 68, pe: 15, san: 24 },
+      { nex: '70%', patente: 'Élite', pv: 72, pe: 16, san: 26 },
+      { nex: '75%', patente: 'Élite', pv: 76, pe: 18, san: 26 },
+      { nex: '80%', patente: 'Comandante', pv: 80, pe: 20, san: 28 },
+      { nex: '85%', patente: 'Comandante', pv: 84, pe: 22, san: 28 },
+      { nex: '90%', patente: 'Lendário', pv: 88, pe: 24, san: 30 },
+      { nex: '95%', patente: 'Lendário', pv: 92, pe: 26, san: 30 },
+      { nex: '99%', patente: 'Além do Véu', pv: 100, pe: 30, san: 30 },
+    ],
+    pericias: [
+      'Acrobacia','Adestramento','Atletismo','Atualidades','Ciências',
+      'Crime','Diplomacia','Enganação','Fortitude','Furtividade',
+      'Iniciativa','Intimidação','Intuição','Investigação','Luta',
+      'Medicina','Ocultismo','Percepção','Pilotagem','Pontaria',
+      'Prestidigitação','Profissão','Reflexos','Religião','Sobrevivência',
+      'Tecnologia','Vontade'
+    ],
+    derived: (attrs, level) => {
+      const nex = SYSTEMS.op.nexLevels[Math.min(level-1, 19)];
+      const pv = (nex?.pv || 20) + (attrs.VIG||2) * 2;
+      const pe = (nex?.pe || 2) + (attrs.PRE||2);
+      const san = (nex?.san || 12) + (attrs.INT||1);
+      return {
+        'PV': pv,
+        'PE': pe,
+        'Defesa': 10 + (attrs.AGI||2),
+        'Sanidade': san,
+        'Patente': nex?.patente || 'Recruta',
+        'NEX': nex?.nex || '5%'
+      };
+    }
+  },
+  generic: {
+    attrs: ['ATR1','ATR2','ATR3','ATR4','ATR5','ATR6'],
+    races: ['Raça Personalizada'],
+    classes: { 'Classe Personalizada': ['Subclasse Personalizada'] },
+    derived: (attrs, level) => ({ 'PV': 10, 'Defesa': 10, 'Recurso': 5, 'Iniciativa': 0 })
+  }
+};
+
+// ===== NAVIGATION =====
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`page-${id}`).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (id === 'campanha') initMap();
+}
+
+// ===== DICE =====
+function selectDie(sides) {
+  state.selectedDie = sides;
+  document.querySelectorAll('.die-btn').forEach(b => b.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+}
+
+function setMode(mode) {
+  state.rollMode = mode;
+  ['modeNormal','modeAdv','modeDis'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.background = '';
+    el.style.color = '';
+  });
+  const map = { normal: 'modeNormal', advantage: 'modeAdv', disadvantage: 'modeDis' };
+  const el = document.getElementById(map[mode]);
+  if (mode === 'normal') { el.style.background = 'var(--gold)'; el.style.color = 'var(--bg)'; }
+  else if (mode === 'advantage') { el.style.background = 'var(--green2)'; el.style.color = 'white'; }
+  else { el.style.background = 'var(--red2)'; el.style.color = 'white'; }
+}
+
+function rollDie(sides) {
+  return Math.floor(Math.random() * sides) + 1;
+}
+
+function rollDice() {
+  const qty = Math.min(20, Math.max(1, parseInt(document.getElementById('diceQty').value) || 1));
+  const mod = parseInt(document.getElementById('diceMod').value) || 0;
+  const die = state.selectedDie;
+
+  let rolls = [];
+  let usedRolls = [];
+  let label = '';
+
+  if (state.rollMode === 'normal') {
+    for (let i = 0; i < qty; i++) rolls.push(rollDie(die));
+    usedRolls = rolls;
+  } else if (state.rollMode === 'advantage') {
+    const r1 = rollDie(die), r2 = rollDie(die);
+    rolls = [r1, r2];
+    usedRolls = [Math.max(r1, r2)];
+    label = `Vantagem (${r1}, ${r2})`;
+  } else {
+    const r1 = rollDie(die), r2 = rollDie(die);
+    rolls = [r1, r2];
+    usedRolls = [Math.min(r1, r2)];
+    label = `Desvantagem (${r1}, ${r2})`;
+  }
+
+  const sum = usedRolls.reduce((a, b) => a + b, 0) + mod;
+  const isCrit = die === 20 && usedRolls[0] === 20 && state.rollMode !== 'disadvantage';
+  const isFumble = die === 20 && usedRolls[0] === 1 && state.rollMode !== 'advantage';
+
+  const totalEl = document.getElementById('diceTotal');
+  totalEl.className = 'dice-total';
+  void totalEl.offsetWidth;
+  totalEl.classList.add('rolling');
+  if (isCrit) totalEl.classList.add('critical');
+  if (isFumble) totalEl.classList.add('fumble');
+  totalEl.textContent = sum;
+
+  let breakdown = `${qty}d${die}`;
+  if (state.rollMode === 'normal' && qty > 1) breakdown += ` [${rolls.join(', ')}]`;
+  if (mod !== 0) breakdown += (mod > 0 ? ` + ${mod}` : ` ${mod}`);
+
+  document.getElementById('diceBreakdown').textContent = breakdown;
+
+  let diceLabel = label || (isCrit ? '🌟 CRÍTICO!' : isFumble ? '💀 FALHA CRÍTICA!' : `${qty}d${die}${mod !== 0 ? (mod > 0 ? ` +${mod}` : ` ${mod}`) : ''}`);
+  document.getElementById('diceLabel').textContent = diceLabel;
+
+  // History
+  const entry = { die: `${qty}d${die}`, mod, result: sum, rolls: usedRolls, crit: isCrit, fumble: isFumble, label: diceLabel };
+  state.rollHistory.unshift(entry);
+  if (state.rollHistory.length > 20) state.rollHistory.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const el = document.getElementById('rollHistory');
+  if (!state.rollHistory.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-family:\'Share Tech Mono\',monospace;font-size:11px;">Nenhuma rolagem ainda...</div>';
+    return;
+  }
+  el.innerHTML = state.rollHistory.map(h => `
+    <div class="history-item">
+      <span class="history-dice">${h.label}</span>
+      <span class="history-rolls">[${h.rolls.join(', ')}]${h.mod ? (h.mod>0?` +${h.mod}`:` ${h.mod}`) : ''}</span>
+      <span class="history-result ${h.crit ? 'h-crit' : ''} ${h.fumble ? 'h-fumble' : ''}">${h.result}${h.crit ? ' ★' : ''}${h.fumble ? ' ✕' : ''}</span>
+    </div>
+  `).join('');
+}
+
+// ===== FICHAS =====
+function openNewFichaModal() {
+  state.editingFichaIndex = -1;
+  document.getElementById('fichaModalTitle').textContent = 'Nova Ficha';
+  document.getElementById('fName').value = '';
+  document.getElementById('fPlayer').value = '';
+  document.getElementById('fAge').value = '';
+  document.getElementById('fBackground').value = '';
+  document.getElementById('fLevel').value = '1';
+  updateSystemOptions();
+  openModal('fichaModal');
+}
+
+function updateSystemOptions() {
+  const sys = document.getElementById('fSystem').value;
+  const data = SYSTEMS[sys];
+
+  const raceEl = document.getElementById('fRace');
+  raceEl.innerHTML = data.races.map(r => `<option>${r}</option>`).join('');
+
+  // For OP, show origens in race field
+  if (sys === 'op' && data.origens) {
+    raceEl.innerHTML = data.origens.map(o => `<option>${o}</option>`).join('');
+    raceEl.previousElementSibling.textContent = 'ORIGEM';
+  } else {
+    raceEl.previousElementSibling.textContent = 'RAÇA / ORIGEM';
+  }
+
+  const classEl = document.getElementById('fClass');
+  classEl.innerHTML = Object.keys(data.classes).map(c => `<option>${c}</option>`).join('');
+
+  updateSubclasses();
+  renderAttrInputs();
+  calcDerived();
+}
+
+function updateSubclasses() {
+  const sys = document.getElementById('fSystem').value;
+  const cls = document.getElementById('fClass').value;
+  const subs = SYSTEMS[sys].classes[cls] || [];
+  document.getElementById('fSubclass').innerHTML = subs.map(s => `<option>${s}</option>`).join('');
+}
+
+function renderAttrInputs() {
+  const sys = document.getElementById('fSystem').value;
+  const attrs = SYSTEMS[sys].attrs;
+  const grid = document.getElementById('attrsGrid');
+  grid.style.gridTemplateColumns = `repeat(${attrs.length}, 1fr)`;
+  grid.innerHTML = attrs.map(a => `
+    <div class="attr-input-group">
+      <span class="attr-input-label">${a}</span>
+      <input type="number" class="attr-input" id="attr_${a}" value="10" min="1" max="30" oninput="calcDerived()">
+      <span class="attr-mod" id="mod_${a}">+0</span>
+    </div>
+  `).join('');
+  calcDerived();
+}
+
+function calcDerived() {
+  const sys = document.getElementById('fSystem').value;
+  const level = parseInt(document.getElementById('fLevel').value) || 1;
+  const attrs = {};
+  SYSTEMS[sys].attrs.forEach(a => {
+    const val = parseInt(document.getElementById(`attr_${a}`)?.value) || 10;
+    attrs[a] = val;
+    const mod = Math.floor((val - 10) / 2);
+    const modEl = document.getElementById(`mod_${a}`);
+    if (modEl) modEl.textContent = mod >= 0 ? `+${mod}` : `${mod}`;
+  });
+
+  const derived = SYSTEMS[sys].derived(attrs, level);
+  const grid = document.getElementById('derivedGrid');
+  grid.innerHTML = Object.entries(derived).map(([k, v]) => `
+    <div class="derived-stat">
+      <span class="derived-label">${k}</span>
+      <span class="derived-value">${v}</span>
+    </div>
+  `).join('');
+}
+
+function saveFicha() {
+  const name = document.getElementById('fName').value.trim();
+  if (!name) { showToast('❌ Nome é obrigatório!'); return; }
+
+  const sys = document.getElementById('fSystem').value;
+  const attrs = {};
+  SYSTEMS[sys].attrs.forEach(a => {
+    attrs[a] = parseInt(document.getElementById(`attr_${a}`)?.value) || 10;
+  });
+
+  const ficha = {
+    system: sys,
+    name,
+    race: document.getElementById('fRace').value,
+    cls: document.getElementById('fClass').value,
+    subclass: document.getElementById('fSubclass').value,
+    level: document.getElementById('fLevel').value,
+    player: document.getElementById('fPlayer').value,
+    age: document.getElementById('fAge').value,
+    background: document.getElementById('fBackground').value,
+    attrs
+  };
+
+  if (state.editingFichaIndex >= 0) {
+    state.fichas[state.editingFichaIndex] = ficha;
+  } else {
+    state.fichas.push(ficha);
+  }
+
+  localStorage.setItem('rpg_fichas', JSON.stringify(state.fichas));
+  renderFichas();
+  closeModal('fichaModal');
+  showToast('✓ Ficha salva!');
+}
+
+function renderFichas() {
+  const el = document.getElementById('fichasList');
+  if (!state.fichas.length) {
+    el.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">📜</div><div class="empty-text">Nenhuma ficha criada</div><div style="font-size:13px;color:var(--muted);margin-top:8px;">Clique em "Nova Ficha" para começar</div></div>`;
+    return;
+  }
+  el.innerHTML = state.fichas.map((f, i) => {
+    const sysLabel = { dnd5e: 'D&D 5E', tormenta20: 'TORMENTA 20', op: 'ORDEM PARANORMAL', generic: 'GENÉRICO' }[f.system] || f.system.toUpperCase();
+    const attrs = Object.entries(f.attrs).slice(0, 4).map(([k, v]) => `<span class="mini-attr">${k}:${v}</span>`).join('');
+    return `
+      <div class="ficha-card ${f.system}" onclick="editFicha(${i})">
+        <button class="ficha-card-del" onclick="event.stopPropagation();deleteFicha(${i})">✕</button>
+        <div class="ficha-card-system">${sysLabel}</div>
+        <div class="ficha-card-name">${f.name}</div>
+        <div class="ficha-card-class">${f.race} · ${f.cls} · Nível ${f.level}</div>
+        <div class="ficha-card-attrs">${attrs}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function editFicha(i) {
+  const f = state.fichas[i];
+  state.editingFichaIndex = i;
+  document.getElementById('fichaModalTitle').textContent = 'Editar Ficha';
+  document.getElementById('fSystem').value = f.system;
+  updateSystemOptions();
+  setTimeout(() => {
+    document.getElementById('fName').value = f.name;
+    document.getElementById('fPlayer').value = f.player || '';
+    document.getElementById('fAge').value = f.age || '';
+    document.getElementById('fBackground').value = f.background || '';
+    document.getElementById('fLevel').value = f.level;
+    document.getElementById('fRace').value = f.race;
+    document.getElementById('fClass').value = f.cls;
+    updateSubclasses();
+    setTimeout(() => {
+      document.getElementById('fSubclass').value = f.subclass;
+      Object.entries(f.attrs).forEach(([k, v]) => {
+        const el = document.getElementById(`attr_${k}`);
+        if (el) el.value = v;
+      });
+      calcDerived();
+    }, 50);
+  }, 50);
+  openModal('fichaModal');
+}
+
+function deleteFicha(i) {
+  state.fichas.splice(i, 1);
+  localStorage.setItem('rpg_fichas', JSON.stringify(state.fichas));
+  renderFichas();
+  showToast('🗑️ Ficha removida');
+}
+
+// ===== MONSTERS =====
+function openNewMonsterModal() {
+  ['mName','mCR','mIcon','mSpeed','mAttacks','mAbilities'].forEach(id => document.getElementById(id).value = '');
+  ['mHP','mAC','mSTR','mDEX','mCON'].forEach(id => document.getElementById(id).value = '10');
+  openModal('monsterModal');
+}
+
+function saveMonster() {
+  const name = document.getElementById('mName').value.trim();
+  if (!name) { showToast('❌ Nome é obrigatório!'); return; }
+  const m = {
+    name,
+    type: document.getElementById('mType').value,
+    cr: document.getElementById('mCR').value || '?',
+    icon: document.getElementById('mIcon').value || '💀',
+    hp: parseInt(document.getElementById('mHP').value) || 10,
+    ac: parseInt(document.getElementById('mAC').value) || 10,
+    speed: document.getElementById('mSpeed').value || '9m',
+    str: document.getElementById('mSTR').value,
+    dex: document.getElementById('mDEX').value,
+    con: document.getElementById('mCON').value,
+    attacks: document.getElementById('mAttacks').value,
+    abilities: document.getElementById('mAbilities').value,
+  };
+  state.monsters.push(m);
+  localStorage.setItem('rpg_monsters', JSON.stringify(state.monsters));
+  renderMonsters();
+  closeModal('monsterModal');
+  showToast('✓ Criatura salva!');
+}
+
+function renderMonsters() {
+  const el = document.getElementById('monsterList');
+  if (!state.monsters.length) {
+    el.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">💀</div><div class="empty-text">Bestiário vazio</div><div style="font-size:13px;color:var(--muted);margin-top:8px;">Adicione criaturas para a campanha</div></div>`;
+    return;
+  }
+  el.innerHTML = state.monsters.map((m, i) => `
+    <div class="ficha-card op" style="cursor:default;">
+      <button class="ficha-card-del" onclick="deleteMonster(${i})">✕</button>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <span style="font-size:30px;">${m.icon}</span>
+        <div>
+          <div class="ficha-card-name">${m.name}</div>
+          <div class="ficha-card-class">${m.type}</div>
+        </div>
+        <span class="badge-cr" style="margin-left:auto;">CR ${m.cr}</span>
+      </div>
+      <div class="ficha-card-attrs">
+        <span class="mini-attr">PV:${m.hp}</span>
+        <span class="mini-attr">CA:${m.ac}</span>
+        <span class="mini-attr">VEL:${m.speed}</span>
+        <span class="mini-attr">FOR:${m.str}</span>
+      </div>
+      ${m.attacks ? `<div style="margin-top:8px;font-size:11px;color:var(--muted);font-family:'Share Tech Mono',monospace;">${m.attacks.split('\n')[0]}</div>` : ''}
+      <button class="btn btn-red" style="margin-top:10px;width:100%;font-size:10px;padding:6px;" onclick="addMonsterToInit(${i})">+ INICIATIVA</button>
+    </div>
+  `).join('');
+}
+
+function deleteMonster(i) {
+  state.monsters.splice(i, 1);
+  localStorage.setItem('rpg_monsters', JSON.stringify(state.monsters));
+  renderMonsters();
+}
+
+function addMonsterToInit(i) {
+  const m = state.monsters[i];
+  const init = Math.floor(Math.random() * 20) + 1;
+  addCombatant(m.name, init, m.hp);
+  showToast(`⚔️ ${m.name} adicionado à iniciativa (${init})`);
+}
+
+// ===== INITIATIVE =====
+function openInitiativeModal() {
+  document.getElementById('initName').value = '';
+  document.getElementById('initValue').value = '';
+  document.getElementById('initHP').value = '10';
+  openModal('initModal');
+}
+
+function addToInitiative() {
+  const name = document.getElementById('initName').value.trim();
+  const init = parseInt(document.getElementById('initValue').value) || 0;
+  const hp = parseInt(document.getElementById('initHP').value) || 10;
+  if (!name) { showToast('❌ Nome obrigatório'); return; }
+  addCombatant(name, init, hp);
+  closeModal('initModal');
+}
+
+function nextTurn() {
+  if (!state.initiative.length) return;
+  state.currentTurn = (state.currentTurn + 1) % state.initiative.length;
+  if (state.currentTurn === 0) {
+    combatRound++;
+    addCombatLogEntry('turn', `━━ RODADA ${combatRound} ━━`);
+  }
+  const c = state.initiative[state.currentTurn];
+  addCombatLogEntry('turn', `⚔️ Vez de: ${c.name}`);
+  combatTurn++;
+  renderInitiative();
+  showToast(`⚔️ Vez de: ${c.name}`);
+}
+
+function addCombatant(name, init, hp) {
+  state.initiative.push({ name, init, hp, maxHp: hp, conditions: [] });
+  state.initiative.sort((a, b) => b.init - a.init);
+  addCombatLogEntry('turn', `➕ ${name} entrou no combate (Iniciativa: ${init})`);
+  renderInitiative();
+  populateTrackerSelect();
+}
+
+function renderInitiative() {
+  const el = document.getElementById('initiativeList');
+  if (!state.initiative.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-family:\'Share Tech Mono\',monospace;font-size:11px;">Nenhum combatente na fila</div>';
+    return;
+  }
+  const CONDITIONS = ['Envenenado','Paralisado','Atordoado','Assustado','Invisível','Concentração','Sangrando','Maldito'];
+  el.innerHTML = state.initiative.map((c, i) => {
+    const pct = Math.max(0, (c.hp / c.maxHp) * 100);
+    const conds = (c.conditions || []);
+    return `
+      <div class="init-item ${i === state.currentTurn ? 'active' : ''}">
+        <span class="init-order">${c.init}</span>
+        <div style="flex:1;">
+          <span class="init-name">${c.name}</span>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;">
+            ${CONDITIONS.map(cd => `<span class="cond-tag ${conds.includes(cd)?'active':''}" onclick="toggleCondition(${i},'${cd}')">${cd}</span>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div class="init-hp-bar"><div class="init-hp-fill" style="width:${pct}%"></div></div>
+          <div style="display:flex;gap:4px;margin-top:4px;">
+            <button onclick="changeHP(${i},-1)" style="background:var(--red);border:none;color:white;font-size:10px;padding:1px 5px;cursor:pointer;">-</button>
+            <span class="init-hp-text">${c.hp}/${c.maxHp}</span>
+            <button onclick="changeHP(${i},1)" style="background:var(--green);border:none;color:white;font-size:10px;padding:1px 5px;cursor:pointer;">+</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function changeHP(i, delta) {
+  const amt = delta * (window.event?.shiftKey ? 5 : 1);
+  const c = state.initiative[i];
+  const prev = c.hp;
+  c.hp = Math.max(0, Math.min(c.maxHp, c.hp + amt));
+  const diff = c.hp - prev;
+  if (diff < 0) addCombatLogEntry('damage', `💥 ${c.name} sofreu ${Math.abs(diff)} de dano → ${c.hp}/${c.maxHp} PV`);
+  else if (diff > 0) addCombatLogEntry('heal', `💚 ${c.name} recuperou ${diff} PV → ${c.hp}/${c.maxHp} PV`);
+  if (c.hp === 0) addCombatLogEntry('death', `☠️ ${c.name} caiu!`);
+  renderInitiative();
+}
+
+function clearInitiative() {
+  state.initiative = [];
+  state.currentTurn = 0;
+  combatRound = 1;
+  combatTurn = 0;
+  renderInitiative();
+}
+
+// ===== MAP =====
+let canvas, ctx;
+let mapBgImage = null;
+let dragToken = null, dragOffX = 0, dragOffY = 0;
+let rulerStart = null, rulerEnd = null;
+let wallPreview = null;
+
+function initMap() {
+  if (canvas) return;
+  canvas = document.getElementById('mapCanvas');
+  ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 760;
+  canvas.height = 500;
+
+  // Mouse events
+  canvas.addEventListener('mousedown', onMapDown);
+  canvas.addEventListener('mousemove', onMapMove);
+  canvas.addEventListener('mouseup', onMapUp);
+  canvas.addEventListener('contextmenu', e => { e.preventDefault(); rightClickToken(e); });
+  drawMap();
+}
+
+function getPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / r.width;
+  const scaleY = canvas.height / r.height;
+  return { x: (e.clientX - r.left) * scaleX, y: (e.clientY - r.top) * scaleY };
+}
+
+function snapToGrid(pos) {
+  const grid = parseInt(document.getElementById('gridSize').value) || 40;
+  return {
+    x: Math.floor(pos.x / grid) * grid + grid / 2,
+    y: Math.floor(pos.y / grid) * grid + grid / 2
+  };
+}
+
+function tokenAt(pos) {
+  const grid = parseInt(document.getElementById('gridSize').value) || 40;
+  const r = grid * 0.38;
+  return state.mapTokens.findIndex(t => {
+    const dx = t.x - pos.x, dy = t.y - pos.y;
+    return Math.sqrt(dx*dx + dy*dy) < r + 4;
+  });
+}
+
+function onMapDown(e) {
+  const pos = getPos(e);
+  const tool = state.mapTool;
+
+  if (tool === 'move') {
+    const idx = tokenAt(pos);
+    if (idx >= 0) {
+      dragToken = idx;
+      dragOffX = pos.x - state.mapTokens[idx].x;
+      dragOffY = pos.y - state.mapTokens[idx].y;
+      canvas.style.cursor = 'grabbing';
+    }
+  } else if (tool === 'token') {
+    const snap = snapToGrid(pos);
+    const existing = tokenAt(snap);
+    if (existing < 0) {
+      const colors = ['#c0392b','#2980b9','#27ae60','#8e44ad','#e67e22','#1abc9c','#d35400','#16a085'];
+      const label = prompt('Nome/Label do token (1-3 chars):', String.fromCharCode(65 + state.mapTokens.length)) || String.fromCharCode(65 + state.mapTokens.length);
+      state.mapTokens.push({ x: snap.x, y: snap.y, label: label.substring(0,3), color: colors[state.mapTokens.length % colors.length] });
+      drawMap();
+    }
+  } else if (tool === 'wall') {
+    state.mapDrawing = true;
+    state.mapWallStart = pos;
+    wallPreview = pos;
+  } else if (tool === 'ruler') {
+    rulerStart = pos;
+    rulerEnd = pos;
+  } else if (tool === 'erase') {
+    const idx = tokenAt(pos);
+    if (idx >= 0) { state.mapTokens.splice(idx, 1); drawMap(); }
+  }
+}
+
+function onMapMove(e) {
+  const pos = getPos(e);
+  if (dragToken !== null && state.mapTool === 'move') {
+    state.mapTokens[dragToken].x = pos.x - dragOffX;
+    state.mapTokens[dragToken].y = pos.y - dragOffY;
+    drawMap();
+  } else if (state.mapTool === 'wall' && state.mapDrawing) {
+    wallPreview = pos;
+    drawMap();
+    // Draw wall preview
+    ctx.strokeStyle = 'rgba(106,74,42,0.6)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([6,4]);
+    ctx.beginPath();
+    ctx.moveTo(state.mapWallStart.x, state.mapWallStart.y);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  } else if (state.mapTool === 'ruler' && rulerStart) {
+    rulerEnd = pos;
+    drawMap();
+    drawRuler();
+  }
+}
+
+function onMapUp(e) {
+  const pos = getPos(e);
+  if (dragToken !== null) {
+    // Snap to grid on drop
+    const snap = snapToGrid(pos);
+    state.mapTokens[dragToken].x = snap.x;
+    state.mapTokens[dragToken].y = snap.y;
+    dragToken = null;
+    canvas.style.cursor = '';
+    drawMap();
+  } else if (state.mapTool === 'wall' && state.mapDrawing && state.mapWallStart) {
+    state.mapWalls.push({ from: state.mapWallStart, to: pos });
+    state.mapDrawing = false;
+    wallPreview = null;
+    drawMap();
+  } else if (state.mapTool === 'ruler') {
+    rulerStart = null; rulerEnd = null;
+    drawMap();
+  }
+}
+
+function rightClickToken(e) {
+  const pos = getPos(e);
+  const idx = tokenAt(pos);
+  if (idx >= 0) {
+    const t = state.mapTokens[idx];
+    const colors = ['#c0392b','#2980b9','#27ae60','#8e44ad','#e67e22','#1abc9c','#d35400','#16a085'];
+    const action = prompt(`Token: ${t.label}\n1. Renomear\n2. Mudar cor\n3. Remover\n\nDigite 1, 2 ou 3:`);
+    if (action === '1') { t.label = (prompt('Novo nome:', t.label) || t.label).substring(0,3); }
+    else if (action === '2') { const ci = parseInt(prompt('Cor (1-8):\n1.Vermelho 2.Azul 3.Verde 4.Roxo 5.Laranja 6.Ciano 7.Marrom 8.Teal')) - 1; if (ci >= 0) t.color = colors[ci] || t.color; }
+    else if (action === '3') { state.mapTokens.splice(idx, 1); }
+    drawMap();
+  }
+}
+
+function drawRuler() {
+  if (!rulerStart || !rulerEnd) return;
+  const grid = parseInt(document.getElementById('gridSize').value) || 40;
+  const dx = rulerEnd.x - rulerStart.x, dy = rulerEnd.y - rulerStart.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  const squares = (dist / grid).toFixed(1);
+  const meters = (squares * 1.5).toFixed(1);
+
+  ctx.strokeStyle = '#f1c40f';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5,3]);
+  ctx.beginPath();
+  ctx.moveTo(rulerStart.x, rulerStart.y);
+  ctx.lineTo(rulerEnd.x, rulerEnd.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Dots at ends
+  [rulerStart, rulerEnd].forEach(p => {
+    ctx.fillStyle = '#f1c40f';
+    ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+  });
+
+  // Label
+  const mx = (rulerStart.x + rulerEnd.x) / 2;
+  const my = (rulerStart.y + rulerEnd.y) / 2;
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(mx - 40, my - 14, 80, 22);
+  ctx.fillStyle = '#f1c40f';
+  ctx.font = 'bold 11px Share Tech Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`${squares}sq · ${meters}m`, mx, my);
+}
+
+function setMapTool(tool) {
+  state.mapTool = tool;
+  document.querySelectorAll('.map-tool-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tool-${tool}`)?.classList.add('active');
+  canvas.style.cursor = tool === 'move' ? 'grab' : tool === 'ruler' ? 'crosshair' : tool === 'erase' ? 'cell' : 'default';
+}
+
+function loadMapBackground() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => { mapBgImage = img; drawMap(); showToast('🖼️ Imagem carregada!'); };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function drawMap() {
+  if (!canvas || !ctx) return;
+  const grid = parseInt(document.getElementById('gridSize').value) || 40;
+  const w = canvas.width, h = canvas.height;
+
+  // Background
+  if (mapBgImage) {
+    ctx.drawImage(mapBgImage, 0, 0, w, h);
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fillRect(0,0,w,h);
+  } else {
+    ctx.fillStyle = '#0f0e0c';
+    ctx.fillRect(0, 0, w, h);
+    // Subtle texture
+    ctx.fillStyle = 'rgba(201,168,76,0.01)';
+    for (let i=0; i<w; i+=3) for (let j=0; j<h; j+=3) if (Math.random()>0.97) ctx.fillRect(i,j,1,1);
+  }
+
+  // Grid
+  ctx.strokeStyle = mapBgImage ? 'rgba(255,255,255,0.15)' : 'rgba(201,168,76,0.12)';
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x <= w; x += grid) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for (let y = 0; y <= h; y += grid) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+
+  // Walls
+  ctx.strokeStyle = '#8b6010';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  state.mapWalls.forEach(wall => {
+    ctx.beginPath();
+    ctx.moveTo(wall.from.x, wall.from.y);
+    ctx.lineTo(wall.to.x, wall.to.y);
+    ctx.stroke();
+  });
+  ctx.lineCap = 'butt';
+
+  // Tokens
+  const r = grid * 0.38;
+  state.mapTokens.forEach((t, i) => {
+    const isDragging = i === dragToken;
+    // Shadow ring
+    ctx.shadowColor = t.color;
+    ctx.shadowBlur = isDragging ? 20 : 10;
+    ctx.fillStyle = t.color;
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, r, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Border
+    ctx.strokeStyle = isDragging ? '#fff' : 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = isDragging ? 2.5 : 1.5;
+    ctx.stroke();
+
+    // Inner highlight
+    const grad = ctx.createRadialGradient(t.x - r*0.3, t.y - r*0.3, 0, t.x, t.y, r);
+    grad.addColorStop(0, 'rgba(255,255,255,0.25)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.2)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, r, 0, Math.PI*2);
+    ctx.fill();
+
+    // Label
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${t.label.length > 1 ? Math.floor(r*0.7) : Math.floor(r)}px Cinzel, serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(t.label, t.x, t.y);
+
+    // Name below token (if long label)
+    if (t.label.length > 1) {
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.font = `10px Share Tech Mono, monospace`;
+      ctx.fillText(t.label, t.x, t.y + r + 10);
+    }
+  });
+}
+
+function clearMap() {
+  if (!confirm('Limpar todo o mapa?')) return;
+  state.mapTokens = [];
+  state.mapWalls = [];
+  mapBgImage = null;
+  drawMap();
+}
+
+// ===== NAME GENERATOR =====
+const NAMES = {
+  humano: { m: ['Aldric','Beren','Caius','Dorn','Edric','Farid','Gareth','Hakon','Ivan','Jorin','Kael','Leoric','Maren','Nolan','Oswin','Pavel','Quint','Rafe','Silas','Talon'], f: ['Aela','Brynn','Calla','Dara','Elyn','Fira','Gwen','Hara','Iris','Jana','Kira','Lyra','Mira','Nora','Orla','Petra','Quinn','Reva','Sela','Tara'] },
+  elfo: { m: ['Aelion','Caladorn','Erevan','Faelar','Galinndan','Hamal','Iorveth','Laronnar','Mirindel','Naevys','Quarion','Riardon','Silvanus','Thalion','Vaeril'], f: ['Adrie','Birel','Caelynn','Dara','Enna','Faral','Gaelira','Iefyr','Leshanna','Mialee','Naivara','Quelenna','Rillian','Sariel','Thia','Valanthe'] },
+  anao: { m: ['Adrik','Baern','Darrak','Eberk','Fargrim','Gardain','Harbek','Kildrak','Morgran','Neder','Orson','Rangrim','Thoradin','Ulfgar','Veit'], f: ['Amber','Bardryn','Diesa','Eldeth','Falkrunn','Gurdis','Helja','Kathra','Mardred','Riswynn','Sannl','Torbera','Urshar','Vistra'] },
+  halfling: { m: ['Alton','Beau','Cade','Eldon','Garret','Lyle','Milo','Osborn','Perrin','Reed','Roscoe','Welby'], f: ['Andry','Bree','Callie','Euphemia','Jillian','Kithri','Lavinia','Lidda','Merla','Nedda','Paela','Portia','Seraphina','Vani'] },
+  goblin: { m: ['Brak','Dreg','Fizz','Grix','Krob','Mox','Nix','Plug','Rix','Skab','Tix','Vex'], f: ['Brix','Crix','Dex','Fizz','Glim','Ixa','Jixa','Nixie','Rixa','Snixa','Trixa'] },
+  tiefling: { m: ['Akmenos','Amnon','Barakas','Damakos','Ekemon','Iados','Kairon','Leucis','Melech','Mordai','Morthos','Pelaios','Skamos','Therai'], f: ['Akta','Antroda','Bryseis','Criella','Damaia','Ea','Kallista','Lerissa','Makaria','Nemeia','Orianna','Phelaia','Rieta'] }
+};
+
+function openNameGen() {
+  const modal = document.getElementById('nameGenModal');
+  if (modal) { openModal('nameGenModal'); return; }
+  // Create inline if not exists
+  generateNames();
+}
+
+function generateNames() {
+  const race = document.getElementById('nameGenRace')?.value || 'humano';
+  const gender = document.getElementById('nameGenGender')?.value || 'mixed';
+  const pool = NAMES[race] || NAMES.humano;
+  let names = [];
+  if (gender === 'male' || gender === 'mixed') names.push(...pool.m);
+  if (gender === 'female' || gender === 'mixed') names.push(...pool.f);
+  const picks = [];
+  for (let i = 0; i < 12; i++) picks.push(names[Math.floor(Math.random() * names.length)]);
+  document.getElementById('nameResults').innerHTML = picks.map(n =>
+    `<button class="macro-btn" style="text-align:center;" onclick="copyName('${n}')">${n}</button>`
+  ).join('');
+}
+
+// ===== MODAL UTILS =====
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Click outside to close
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== CONDITIONS =====
+function toggleCondition(i, cond) {
+  if (!state.initiative[i].conditions) state.initiative[i].conditions = [];
+  const idx = state.initiative[i].conditions.indexOf(cond);
+  if (idx >= 0) state.initiative[i].conditions.splice(idx, 1);
+  else state.initiative[i].conditions.push(cond);
+  renderInitiative();
+}
+
+// ===== MACROS =====
+const macros = JSON.parse(localStorage.getItem('rpg_macros') || '[]');
+
+function openMacroModal() { openModal('macroModal'); }
+
+function saveMacro() {
+  const name = document.getElementById('macroName').value.trim();
+  if (!name) { showToast('❌ Nome obrigatório'); return; }
+  macros.push({
+    name,
+    qty: parseInt(document.getElementById('macroQty').value) || 1,
+    die: parseInt(document.getElementById('macroDie').value) || 20,
+    mod: parseInt(document.getElementById('macroMod').value) || 0,
+    mode: document.getElementById('macroMode').value
+  });
+  localStorage.setItem('rpg_macros', JSON.stringify(macros));
+  renderMacros();
+  closeModal('macroModal');
+  showToast('✓ Macro salva!');
+}
+
+function runMacro(i) {
+  const m = macros[i];
+  state.selectedDie = m.die;
+  document.getElementById('diceQty').value = m.qty;
+  document.getElementById('diceMod').value = m.mod;
+  state.rollMode = m.mode;
+  rollDice();
+  showToast(`🎲 ${m.name}: rolando ${m.qty}d${m.die}${m.mod >= 0 ? '+' : ''}${m.mod}`);
+}
+
+function deleteMacro(i) {
+  macros.splice(i, 1);
+  localStorage.setItem('rpg_macros', JSON.stringify(macros));
+  renderMacros();
+}
+
+function renderMacros() {
+  const el = document.getElementById('macrosGrid');
+  if (!macros.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-family:\'Share Tech Mono\',monospace;font-size:11px;grid-column:1/-1;">Nenhuma macro salva. Crie atalhos de rolagem!</div>';
+    return;
+  }
+  el.innerHTML = macros.map((m, i) => `
+    <button class="macro-btn" onclick="runMacro(${i})">
+      <button class="macro-del" onclick="event.stopPropagation();deleteMacro(${i})">✕</button>
+      <span class="macro-name">${m.name}</span>
+      <span class="macro-formula">${m.qty}d${m.die}${m.mod >= 0 ? '+' : ''}${m.mod} ${m.mode !== 'normal' ? '('+m.mode+')' : ''}</span>
+    </button>
+  `).join('');
+}
+
+// ===== FICHA INNER TABS =====
+function switchFichaTab(tab, btn) {
+  document.querySelectorAll('.ficha-inner-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ficha-inner-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(`ftab-${tab}`).classList.add('active');
+  btn.classList.add('active');
+  if (tab === 'magias') renderSpellSlots();
+}
+
+// ===== INVENTÁRIO =====
+let currentInventory = [];
+
+function addInventoryItem() { openModal('itemModal'); }
+
+function saveInventoryItem() {
+  const name = document.getElementById('itemName').value.trim();
+  if (!name) { showToast('❌ Nome obrigatório'); return; }
+  currentInventory.push({
+    name,
+    qty: parseInt(document.getElementById('itemQty').value) || 1,
+    weight: parseFloat(document.getElementById('itemWeight').value) || 0,
+    value: document.getElementById('itemValue').value || '—'
+  });
+  renderInventory();
+  closeModal('itemModal');
+  document.getElementById('itemName').value = '';
+}
+
+function renderInventory() {
+  const tbody = document.getElementById('inventoryBody');
+  if (!currentInventory.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);font-family:\'Share Tech Mono\',monospace;font-size:11px;padding:12px 8px;">Inventário vazio</td></tr>';
+    document.getElementById('invWeight').textContent = '0';
+    return;
+  }
+  const totalW = currentInventory.reduce((s, i) => s + i.weight * i.qty, 0).toFixed(1);
+  document.getElementById('invWeight').textContent = totalW;
+  tbody.innerHTML = currentInventory.map((item, i) => `
+    <tr>
+      <td style="color:var(--white);font-weight:600;">${item.name}</td>
+      <td style="color:var(--text2);">${item.qty}</td>
+      <td style="color:var(--text2);">${item.weight}kg</td>
+      <td style="color:var(--gold);">${item.value}</td>
+      <td><button onclick="removeItem(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;">✕</button></td>
+    </tr>
+  `).join('');
+}
+
+function removeItem(i) {
+  currentInventory.splice(i, 1);
+  renderInventory();
+}
+
+// ===== MAGIAS =====
+let currentSpells = [];
+let spellSlotsUsed = {};
+
+function addSpell() { openModal('spellModal'); }
+
+function saveSpell() {
+  const name = document.getElementById('spellName').value.trim();
+  if (!name) { showToast('❌ Nome obrigatório'); return; }
+  currentSpells.push({
+    name,
+    school: document.getElementById('spellSchool').value,
+    level: parseInt(document.getElementById('spellLevel').value) || 0,
+    dmg: document.getElementById('spellDmg').value
+  });
+  currentSpells.sort((a, b) => a.level - b.level);
+  renderSpellList();
+  closeModal('spellModal');
+  document.getElementById('spellName').value = '';
+}
+
+function renderSpellSlots() {
+  const el = document.getElementById('spellSlots');
+  el.innerHTML = [1,2,3,4,5,6,7,8,9].map(lvl => {
+    const maxSlots = Math.max(0, 5 - Math.floor(lvl * 0.6));
+    const used = spellSlotsUsed[lvl] || 0;
+    const boxes = Array.from({length: maxSlots}, (_, i) => `
+      <div class="spell-slot-box ${i < used ? 'used' : ''}" onclick="toggleSlot(${lvl},${i})" title="Slot Nível ${lvl}">${i < used ? '✕' : lvl}</div>
+    `).join('');
+    return `<div class="spell-slot-col"><span class="spell-slot-label">Nv${lvl}</span>${boxes}</div>`;
+  }).join('');
+}
+
+function toggleSlot(lvl, idx) {
+  const used = spellSlotsUsed[lvl] || 0;
+  spellSlotsUsed[lvl] = idx < used ? used - 1 : used + 1;
+  renderSpellSlots();
+}
+
+function renderSpellList() {
+  const el = document.getElementById('spellList');
+  if (!currentSpells.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;font-style:italic;">Nenhuma magia registrada</div>';
+    return;
+  }
+  el.innerHTML = currentSpells.map((s, i) => `
+    <div class="spell-item">
+      <span class="spell-level-badge">${s.level === 0 ? 'T' : s.level}</span>
+      <div style="flex:1;">
+        <div class="spell-name">${s.name}</div>
+        <div class="spell-school">${s.school}${s.dmg ? ' · ' + s.dmg : ''}</div>
+      </div>
+      <button onclick="rollSpell(${i})" style="background:var(--panel2);border:1px solid var(--border);color:var(--gold);font-size:10px;padding:3px 8px;cursor:pointer;font-family:'Share Tech Mono',monospace;">ROLAR</button>
+      <button onclick="removeSpell(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;margin-left:4px;">✕</button>
+    </div>
+  `).join('');
+}
+
+function rollSpell(i) {
+  const s = currentSpells[i];
+  if (!s.dmg) { showToast(`✨ ${s.name} conjurada!`); return; }
+  const match = s.dmg.match(/(\d+)d(\d+)/);
+  if (match) {
+    const qty = parseInt(match[1]), die = parseInt(match[2]);
+    let total = 0, rolls = [];
+    for (let j = 0; j < qty; j++) { const r = Math.floor(Math.random() * die) + 1; rolls.push(r); total += r; }
+    showToast(`✨ ${s.name}: [${rolls.join(',')}] = ${total}`);
+    const entry = { die: `${qty}d${die}`, mod: 0, result: total, rolls, crit: false, fumble: false, label: s.name };
+    state.rollHistory.unshift(entry);
+    renderHistory();
+  }
+}
+
+function removeSpell(i) { currentSpells.splice(i, 1); renderSpellList(); }
+
+// ===== XP =====
+const XP_TABLE = [0,300,900,2700,6500,14000,23000,34000,48000,64000,85000,100000,120000,140000,165000,195000,225000,265000,305000,355000];
+
+function updateXPBar() {
+  const xp = parseInt(document.getElementById('fXP').value) || 0;
+  let level = 1;
+  for (let i = 1; i < XP_TABLE.length; i++) { if (xp >= XP_TABLE[i]) level = i + 1; }
+  level = Math.min(20, level);
+  document.getElementById('fXPLevel').value = level;
+  const curr = XP_TABLE[level - 1];
+  const next = XP_TABLE[level] || XP_TABLE[19];
+  const pct = level >= 20 ? 100 : Math.min(100, ((xp - curr) / (next - curr)) * 100);
+  document.getElementById('xpBarFill').style.width = pct + '%';
+  document.getElementById('xpCurrent').textContent = xp + ' XP';
+  document.getElementById('xpNext').textContent = (level >= 20 ? 'MAX' : next + ' XP');
+
+  const milestones = document.getElementById('xpMilestones');
+  milestones.innerHTML = [1,5,10,15,20].map(l => `
+    <div style="text-align:center;padding:8px;background:var(--panel);border:1px solid ${level>=l?'var(--gold)':'var(--border)'};opacity:${level>=l?1:0.4};">
+      <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--gold);">Nv${l}</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">${XP_TABLE[l-1]} XP</div>
+    </div>
+  `).join('');
+}
+
+function copyName(n) {
+  navigator.clipboard?.writeText(n).catch(()=>{});
+  showToast(`📋 "${n}" copiado!`);
+}
+
+function generateTavern() {
+  const adj1 = ['Dourado','Sombrio','Ferrugento','Prateado','Sanguíneo','Embriagado','Velho','Nobre','Maldito','Glorioso'];
+  const noun = ['Dragão','Grifo','Corvo','Elmo','Barril','Escudo','Osso','Carneiro','Espada','Ancora'];
+  const suffix = ['Taberna','Estalagem','Cantina','Pousada','Refúgio','Covil','Salão'];
+  const owner = ['Gareth','Mira','Dorn','Elda','Rago','Syra','Brun','Tavi'];
+  const spec = ['Ensopado de javali','Hidromel de mel negro','Pão com queijo de cabra','Sopa de cogumelos','Vinho de cereja','Cerveja escura local'];
+  const rumor = [
+    'Dizem que há um tesouro escondido nas ruínas ao norte',
+    'Um viajante desapareceu na estrada da floresta há 3 dias',
+    'O prefeito da cidade está escondendo algo sombrio',
+    'Um dragão foi avistado sobrevoando as montanhas',
+    'A guilda dos ladrões está recrutando novos membros',
+    'Uma criança sumiu da aldeia vizinha esta semana'
+  ];
+  const name = `${adj1[~~(Math.random()*adj1.length)]} ${noun[~~(Math.random()*noun.length)]}`;
+  const sfx = suffix[~~(Math.random()*suffix.length)];
+  const own = owner[~~(Math.random()*owner.length)];
+  const sp = spec[~~(Math.random()*spec.length)];
+  const rm = rumor[~~(Math.random()*rumor.length)];
+
+  document.getElementById('tavernResult').innerHTML = `
+    <div style="font-family:'Cinzel',serif;font-size:20px;color:var(--gold);margin-bottom:10px;">${name} — ${sfx}</div>
+    <div>👤 <span style="color:var(--text2);">Dono:</span> ${own}</div>
+    <div>🍖 <span style="color:var(--text2);">Especialidade:</span> ${sp}</div>
+    <div>💬 <span style="color:var(--text2);">Rumor do dia:</span> <em style="color:var(--muted);">"${rm}"</em></div>
+  `;
+}
+
+// ===== OP TRACKER =====
+const tracker = {
+  pe: 2, peMax: 2,
+  san: 12, sanMax: 12,
+  exposure: 5
+};
+
+function loadTrackerAgent() {
+  const sel = document.getElementById('trackerAgentSelect').value;
+  if (!sel) return;
+  const f = state.fichas[parseInt(sel)];
+  if (!f || f.system !== 'op') return;
+  const level = parseInt(f.level) || 1;
+  const nex = SYSTEMS.op.nexLevels[Math.min(level-1,19)];
+  const pv = (nex?.pv || 20) + (f.attrs.VIG||2)*2;
+  const pe = (nex?.pe || 2) + (f.attrs.PRE||2);
+  const san = (nex?.san || 12) + (f.attrs.INT||1);
+  tracker.pe = pe; tracker.peMax = pe;
+  tracker.san = san; tracker.sanMax = san;
+  tracker.exposure = parseInt(nex?.nex) || 5;
+  updateTrackerUI();
+  showToast(`🔮 ${f.name} carregado no tracker!`);
+}
+
+function populateTrackerSelect() {
+  const sel = document.getElementById('trackerAgentSelect');
+  if (!sel) return;
+  const opFichas = state.fichas.filter(f => f.system === 'op');
+  sel.innerHTML = '<option value="">— Selecionar —</option>' +
+    state.fichas.map((f, i) => f.system === 'op' ? `<option value="${i}">${f.name}</option>` : '').join('');
+}
+
+function changeResource(res, delta) {
+  const shift = window.event?.shiftKey ? 5 : 1;
+  const amt = delta * shift;
+  if (res === 'pe') {
+    tracker.pe = Math.max(0, Math.min(tracker.peMax, tracker.pe + amt));
+    if (amt < 0) addCombatLogEntry('san', `PE gasto: ${Math.abs(amt)} → Restam ${tracker.pe}/${tracker.peMax}`);
+  } else {
+    tracker.san = Math.max(0, Math.min(tracker.sanMax, tracker.san + amt));
+    const type = amt < 0 ? 'san' : 'heal';
+    addCombatLogEntry(type, `Sanidade ${amt < 0 ? 'perdida' : 'recuperada'}: ${Math.abs(amt)} → ${tracker.san}/${tracker.sanMax}`);
+    if (tracker.san <= tracker.sanMax * 0.25 && amt < 0) {
+      showToast('⚠️ SANIDADE CRÍTICA! Considere rolar na tabela de Pânico!');
+    }
+  }
+  updateTrackerUI();
+}
+
+function restoreResource(res) {
+  if (res === 'pe') { tracker.pe = tracker.peMax; addCombatLogEntry('heal', `PE restaurado: ${tracker.peMax}/${tracker.peMax}`); }
+  else { tracker.san = tracker.sanMax; }
+  updateTrackerUI();
+  showToast('✓ Recurso restaurado!');
+}
+
+function changeExposure(delta) {
+  tracker.exposure = Math.max(5, Math.min(99, tracker.exposure + delta));
+  updateTrackerUI();
+  const nexLevel = SYSTEMS.op.nexLevels.find(n => parseInt(n.nex) >= tracker.exposure) || SYSTEMS.op.nexLevels[19];
+  addCombatLogEntry('san', `Exposição paranormal: ${tracker.exposure}% — Patente: ${nexLevel.patente}`);
+  showToast(`🔮 NEX: ${tracker.exposure}%`);
+}
+
+function updateTrackerUI() {
+  const pePct = tracker.peMax > 0 ? (tracker.pe / tracker.peMax) * 100 : 0;
+  const sanPct = tracker.sanMax > 0 ? (tracker.san / tracker.sanMax) * 100 : 0;
+
+  document.getElementById('peVal').textContent = tracker.pe;
+  document.getElementById('peMax').textContent = tracker.peMax;
+  document.getElementById('peDisplay').textContent = `${tracker.pe} / ${tracker.peMax}`;
+  document.getElementById('peBar').style.width = pePct + '%';
+
+  document.getElementById('sanVal').textContent = tracker.san;
+  document.getElementById('sanMax').textContent = tracker.sanMax;
+  document.getElementById('sanDisplay').textContent = `${tracker.san} / ${tracker.sanMax}`;
+  const sanBar = document.getElementById('sanBar');
+  sanBar.style.width = sanPct + '%';
+  sanBar.className = 'op-resource-fill san' + (sanPct <= 25 ? ' critical' : sanPct <= 50 ? ' low' : '');
+
+  document.getElementById('exposureVal').textContent = tracker.exposure + '%';
+  document.getElementById('exposureBar').style.width = tracker.exposure + '%';
+  const nexLevel = SYSTEMS.op.nexLevels.find(n => parseInt(n.nex) >= tracker.exposure) || SYSTEMS.op.nexLevels[19];
+  document.getElementById('nexBadge').textContent = `NEX ${tracker.exposure}% · ${nexLevel.patente}`;
+}
+
+function rollPanic() {
+  const panicTable = [
+    { range: [1,2], result: 'Paralisado de medo por 1 rodada' },
+    { range: [3,4], result: 'Foge em pânico por 1d4 rodadas' },
+    { range: [5,6], result: 'Perde 1d4 PE adicionais de choque' },
+    { range: [7,8], result: 'Ataca o aliado mais próximo (1 ação)' },
+    { range: [9,10], result: 'Entra em colapso, inconsciente por 1 rodada' },
+    { range: [11,12], result: 'Delírio: acha que os aliados são inimigos por 1d4 rodadas' },
+    { range: [13,14], result: 'Perda permanente de 1 ponto de Sanidade máxima' },
+    { range: [15,16], result: 'Trauma: adquire uma fobia relacionada ao evento' },
+    { range: [17,18], result: 'Colapso mental: inconsciente até receber cuidados' },
+    { range: [19,20], result: 'Ruptura: o agente passa para o controle do Mestre por 1 cena' },
+  ];
+  const roll = Math.floor(Math.random() * 20) + 1;
+  const result = panicTable.find(p => roll >= p.range[0] && roll <= p.range[1]);
+  addCombatLogEntry('san', `🧠 PÂNICO! Rolou ${roll} → ${result.result}`);
+  showToast(`🧠 Pânico ${roll}: ${result.result.substring(0,40)}...`);
+}
+
+// ===== COMBAT LOG =====
+const combatLog = [];
+let combatTurn = 0;
+let combatRound = 1;
+
+function addCombatLogEntry(type, text) {
+  const entry = { type, text, round: combatRound, turn: combatTurn };
+  combatLog.unshift(entry);
+  if (combatLog.length > 100) combatLog.pop();
+  renderCombatLog();
+}
+
+function renderCombatLog() {
+  const el = document.getElementById('combatLog');
+  if (!combatLog.length) {
+    el.innerHTML = '<div class="log-entry"><span class="log-turn">—</span><span class="log-text" style="color:var(--muted);font-style:italic;">O combate ainda não começou...</span></div>';
+    return;
+  }
+  el.innerHTML = combatLog.map(e => `
+    <div class="log-entry ${e.type}">
+      <span class="log-turn">R${e.round}T${e.turn}</span>
+      <span class="log-text">${e.text}</span>
+    </div>
+  `).join('');
+}
+
+function clearCombatLog() {
+  combatLog.length = 0;
+  combatRound = 1;
+  combatTurn = 0;
+  renderCombatLog();
+}
+
+// Hook combat log into initiative
+const _origNextTurn = nextTurn;
+// Patch addCombatant to log
+const _origAddCombatant = addCombatant;
+
+// ===== LOOT GENERATOR =====
+const LOOT_DB = {
+  generic: {
+    weapon: [
+      { name: 'Espada Longa +1', rarity: 'incomum', desc: '+1 em rolagens de ataque e dano', value: '500po' },
+      { name: 'Arco Élfico', rarity: 'incomum', desc: 'Flechas nunca erram em alvos que não se movem', value: '300po' },
+      { name: 'Machado de Guerra Flamejante', rarity: 'raro', desc: '+1d6 de dano de fogo em cada acerto', value: '2000po' },
+      { name: 'Adaga do Assassino', rarity: 'raro', desc: '+2d6 de dano extra contra alvos surpreendidos', value: '1500po' },
+      { name: 'Martelo dos Trovões', rarity: 'muito-raro', desc: 'Ao acertar, pode desferir um trovão que atinge todos em 3m', value: '8000po' },
+      { name: 'Espada do Destino', rarity: 'lendario', desc: 'Ignora resistências e imunidades a dano não-mágico', value: '50000po' },
+      { name: 'Lança da Tempestade', rarity: 'muito-raro', desc: 'Pode ser lançada até 30m e retorna magicamente', value: '6000po' },
+      { name: 'Punhos de Ferro', rarity: 'incomum', desc: 'Luvas que concedem +1d4 de dano nas socos', value: '400po' },
+    ],
+    armor: [
+      { name: 'Cota de Malha +1', rarity: 'incomum', desc: '+1 na CA além do bônus normal', value: '800po' },
+      { name: 'Escudo do Reflexo', rarity: 'raro', desc: 'Reação: +2 CA até o início do próximo turno', value: '1800po' },
+      { name: 'Armadura de Dragão', rarity: 'muito-raro', desc: 'Resistência ao tipo de dano do dragão de origem', value: '12000po' },
+      { name: 'Manto da Invisibilidade', rarity: 'muito-raro', desc: 'Ação: torna-se invisível por 1 hora (1x/dia)', value: '10000po' },
+      { name: 'Botas da Levitação', rarity: 'raro', desc: 'Ação: levitar por até 10 minutos (concentração)', value: '2400po' },
+    ],
+    potion: [
+      { name: 'Poção de Cura', rarity: 'comum', desc: 'Recupera 2d4+2 PV', value: '50po' },
+      { name: 'Poção de Cura Superior', rarity: 'incomum', desc: 'Recupera 4d4+4 PV', value: '150po' },
+      { name: 'Poção de Força de Gigante', rarity: 'raro', desc: 'FOR 19 por 1 hora', value: '500po' },
+      { name: 'Poção de Voo', rarity: 'muito-raro', desc: 'Velocidade de voo 18m por 1 hora', value: '2000po' },
+      { name: 'Elixir da Saúde', rarity: 'raro', desc: 'Cura todas as doenças e venenos, recupera 4d6 PV', value: '800po' },
+      { name: 'Poção de Invisibilidade', rarity: 'incomum', desc: 'Invisibilidade por 1 hora ou até atacar', value: '200po' },
+    ],
+    treasure: [
+      { name: 'Saco de Moedas de Ouro', rarity: 'comum', desc: '2d6 × 10 moedas de ouro', value: '20-120po' },
+      { name: 'Rubi Lapidado', rarity: 'incomum', desc: 'Pedra preciosa de alta qualidade', value: '500po' },
+      { name: 'Estátua de Prata', rarity: 'comum', desc: 'Representação artística de um deus menor', value: '150po' },
+      { name: 'Colar de Diamantes', rarity: 'raro', desc: 'Joia nobre de origem élfica', value: '2500po' },
+      { name: 'Moeda Antiga', rarity: 'incomum', desc: 'Raridade numismática de civilização esquecida', value: '300po' },
+    ],
+    magic: [
+      { name: 'Anel da Proteção', rarity: 'raro', desc: '+1 em CA e testes de resistência', value: '3500po' },
+      { name: 'Bolsa de Guarda', rarity: 'incomum', desc: 'Armazena até 500 itens sem peso perceptível', value: '400po' },
+      { name: 'Espelho do Passado', rarity: 'muito-raro', desc: 'Mostra uma cena do passado 1x por semana', value: '15000po' },
+      { name: 'Amuleto da Saúde', rarity: 'raro', desc: 'CON 19 enquanto equipado', value: '5000po' },
+      { name: 'Varinha de Bolas de Fogo', rarity: 'raro', desc: '7 cargas. Bola de fogo com CD 15. Recupera 1d6+1 cargas ao amanhecer', value: '4500po' },
+    ]
+  },
+  op: {
+    weapon: [
+      { name: 'Pistola Modificada', rarity: 'incomum', desc: '+1 em testes de Pontaria. Carregador duplo.', value: '3000 créditos' },
+      { name: 'Faca Paranormal', rarity: 'raro', desc: '+1d6 de dano paranormal extra. Atravessa escudos de energia.', value: '8000 créditos' },
+      { name: 'Fuzil de Assalto Tático', rarity: 'incomum', desc: 'Alcance longo +20m. Mira laser inclusa.', value: '5000 créditos' },
+      { name: 'Lâmina Etérea', rarity: 'muito-raro', desc: 'Causa dano a entidades imateriais. +2d8 vs mortos-vivos.', value: '20000 créditos' },
+      { name: 'Shotgun Bençoada', rarity: 'raro', desc: 'Munição sagrada. Crítico em 18-20 contra entidades.', value: '10000 créditos' },
+    ],
+    armor: [
+      { name: 'Colete Balístico', rarity: 'comum', desc: 'Defesa +2. Resistência a projéteis mundanos.', value: '1000 créditos' },
+      { name: 'Escudo Paranormal', rarity: 'raro', desc: 'Absorve até 10 pontos de dano paranormal por cena.', value: '12000 créditos' },
+      { name: 'Roupa Ocultista', rarity: 'incomum', desc: '+2 em testes de Ocultismo. Oculta sinais de exposição.', value: '4000 créditos' },
+    ],
+    potion: [
+      { name: 'Estabilizador de Sanidade', rarity: 'comum', desc: 'Recupera 1d6 pontos de Sanidade. Tarda 1 turno.', value: '500 créditos' },
+      { name: 'Injetor de PE', rarity: 'incomum', desc: 'Recupera 2d4 PE instantaneamente. Uso único.', value: '2000 créditos' },
+      { name: 'Antídoto Paranormal', rarity: 'raro', desc: 'Remove uma maldição ou corrupção de grau 1.', value: '5000 créditos' },
+      { name: 'Supressor de NEX', rarity: 'muito-raro', desc: 'Reduz exposição paranormal em 10% temporariamente.', value: '25000 créditos' },
+    ],
+    treasure: [
+      { name: 'Diário de Ocultista', rarity: 'incomum', desc: 'Contém fragmentos de rituais. +1d4 em Ocultismo.', value: 'Inestimável' },
+      { name: 'Símbolo da Ordem', rarity: 'comum', desc: 'Identificação oficial. Abre portas com autoridades.', value: '—' },
+      { name: 'Artefato do Outro Lado', rarity: 'muito-raro', desc: 'Objeto de origem desconhecida. Efeito a critério do Mestre.', value: 'Inestimável' },
+      { name: 'Gravação Paranormal', rarity: 'raro', desc: 'Registro de ritual proibido em dispositivo antigo.', value: '15000 créditos' },
+    ],
+    magic: [
+      { name: 'Amuleto Protetor', rarity: 'incomum', desc: '+1 em Defesa contra ataques paranormais.', value: '3000 créditos' },
+      { name: 'Tomo de Rituais', rarity: 'raro', desc: 'Contém 1d4 rituais do elemento à escolha do Mestre.', value: '10000 créditos' },
+      { name: 'Fragmento do Outro Lado', rarity: 'muito-raro', desc: 'Concede +1 PE máximo permanente. Aumenta NEX em 5%.', value: 'Inestimável' },
+      { name: 'Dispositivo de Contenção', rarity: 'raro', desc: 'Prende uma entidade de Ameaça ≤3 por 24h.', value: '8000 créditos' },
+    ]
+  },
+  tormenta: {
+    weapon: [
+      { name: 'Espada Sombria', rarity: 'raro', desc: '+2d6 de dano trevas. Drena 1 PM do alvo.', value: '3000 TO' },
+      { name: 'Arco Élfico Dourado', rarity: 'muito-raro', desc: 'Ignora cobertura parcial. +2 em Pontaria.', value: '8000 TO' },
+      { name: 'Martelo Sagrado', rarity: 'incomum', desc: '+1d6 de dano de luz contra mortos-vivos e demônios.', value: '1500 TO' },
+    ],
+    potion: [
+      { name: 'Poção de Cura Leve', rarity: 'comum', desc: 'Recupera 2d6 PV', value: '50 TO' },
+      { name: 'Elixir de Magia', rarity: 'incomum', desc: 'Recupera 3d6 PM', value: '200 TO' },
+      { name: 'Poção de Heroísmo', rarity: 'raro', desc: '+2 em todos os testes por 1 hora', value: '800 TO' },
+    ],
+    magic: [
+      { name: 'Anel de Proteção Mágica', rarity: 'incomum', desc: 'RM 15 contra magias de 1º círculo', value: '1200 TO' },
+      { name: 'Capa da Furtividade', rarity: 'raro', desc: '+10 em Furtividade. Dificulta rastreamento.', value: '3500 TO' },
+    ],
+    treasure: [
+      { name: 'Moedas de Ouro de Vectora', rarity: 'comum', desc: '3d6 × 20 moedas de ouro', value: '60-360 TO' },
+      { name: 'Esmeralda de Mestra', rarity: 'raro', desc: 'Pedra preciosa de alta pureza mágica', value: '2000 TO' },
+    ]
+  }
+};
+
+const RARITY_ORDER = ['comum','incomum','raro','muito-raro','lendario'];
+const RARITY_WEIGHTS = {
+  1: [50, 35, 12, 3, 0],
+  2: [30, 40, 22, 7, 1],
+  3: [15, 30, 35, 17, 3],
+  4: [5, 20, 35, 30, 10],
+};
+const RARITY_LABELS = { comum:'COMUM', incomum:'INCOMUM', raro:'RARO', 'muito-raro':'MUITO RARO', lendario:'LENDÁRIO' };
+
+function generateLoot() {
+  const system = document.getElementById('lootSystem').value;
+  const level = parseInt(document.getElementById('lootLevel').value);
+  const qty = Math.min(12, Math.max(1, parseInt(document.getElementById('lootQty').value) || 4));
+  const type = document.getElementById('lootType').value;
+  const db = LOOT_DB[system] || LOOT_DB.generic;
+  const weights = RARITY_WEIGHTS[level];
+
+  const pickRarity = () => {
+    const roll = Math.random() * 100;
+    let cum = 0;
+    for (let i = 0; i < RARITY_ORDER.length; i++) {
+      cum += weights[i];
+      if (roll < cum) return RARITY_ORDER[i];
+    }
+    return 'comum';
+  };
+
+  const typeKeys = type === 'mixed'
+    ? Object.keys(db)
+    : [type].filter(k => db[k]);
+
+  const results = [];
+  for (let i = 0; i < qty; i++) {
+    const cat = typeKeys[Math.floor(Math.random() * typeKeys.length)];
+    const pool = db[cat] || db.weapon;
+    const rarity = pickRarity();
+    const rarityPool = pool.filter(item => item.rarity === rarity);
+    const anyPool = rarityPool.length > 0 ? rarityPool : pool;
+    results.push(anyPool[Math.floor(Math.random() * anyPool.length)]);
+  }
+
+  const el = document.getElementById('lootResults');
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);letter-spacing:2px;">${qty} ITEM${qty>1?'S':''} GERADO${qty>1?'S':''}</div>
+      <button class="btn btn-gold" onclick="generateLoot()" style="font-size:11px;padding:6px 16px;">🎲 ROLAR NOVAMENTE</button>
+    </div>
+    <div class="loot-grid">
+      ${results.map(item => `
+        <div class="loot-item ${item.rarity}">
+          <div class="loot-rarity ${item.rarity}">${RARITY_LABELS[item.rarity] || item.rarity.toUpperCase()}</div>
+          <div class="loot-name">${item.name}</div>
+          <div class="loot-desc">${item.desc}</div>
+          <div class="loot-value">💰 ${item.value}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function updateLootOptions() {
+  // Could customize type options per system in future
+}
+
+// ===== ORDEM PARANORMAL =====
+function switchOPTab(tab, btn) {
+  document.querySelectorAll('#page-op .ficha-inner-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#page-op .ficha-inner-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(`optab-${tab}`).classList.add('active');
+  btn.classList.add('active');
+}
+
+function renderOPPage() {
+  renderNexTable();
+  renderOPClasses();
+  renderOPElementos();
+  renderOPPericias();
+  renderOPOrigens();
+  renderOPEntidades();
+}
+
+function renderNexTable() {
+  const el = document.getElementById('nexTable');
+  el.innerHTML = SYSTEMS.op.nexLevels.map((n, i) => `
+    <div style="background:var(--panel2);border:1px solid var(--border);padding:12px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:hsl(${i*18},60%,40%);"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--gold);">${n.nex}</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);background:rgba(0,0,0,0.3);padding:2px 6px;">${n.patente}</span>
+      </div>
+      <div style="display:flex;gap:10px;font-family:'Share Tech Mono',monospace;font-size:10px;">
+        <span style="color:var(--red2);">PV:${n.pv}</span>
+        <span style="color:var(--green2);">PE:${n.pe}</span>
+        <span style="color:var(--blue2);">SAN:${n.san}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderOPClasses() {
+  const el = document.getElementById('classesGrid');
+  const classes = SYSTEMS.op.classes;
+  const trilhas = SYSTEMS.op.trilhas;
+  el.innerHTML = Object.entries(classes).map(([cls, subs]) => {
+    const pvMap = { 'Combatente': '20+VIG×2', 'Especialista': '16+VIG×2', 'Ocultista': '12+VIG×2' };
+    const peMap = { 'Combatente': '2+PRE', 'Especialista': '3+PRE', 'Ocultista': '4+PRE' };
+    return `
+    <div style="background:var(--panel);border:1px solid var(--border);overflow:hidden;">
+      <div style="background:rgba(139,32,32,0.3);border-bottom:1px solid var(--border);padding:14px 16px;">
+        <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--gold);">${cls}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;letter-spacing:1px;">
+          PV: ${pvMap[cls]||'?'} &nbsp;|&nbsp; PE: ${peMap[cls]||'?'}
+        </div>
+      </div>
+      <div style="padding:14px;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--red2);letter-spacing:2px;margin-bottom:10px;">TRILHAS (NEX 10%+)</div>
+        ${subs.map(s => {
+          const trilhaName = s.replace(' (NEX 10%)','');
+          const habs = (trilhas[cls]?.[trilhaName]) || [];
+          return `
+          <div style="margin-bottom:12px;">
+            <div style="font-weight:700;color:var(--white);font-size:14px;margin-bottom:4px;">▸ ${trilhaName}</div>
+            ${habs.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;">${habs.map(h=>`<span style="font-family:'Share Tech Mono',monospace;font-size:9px;padding:2px 6px;border:1px solid var(--border);color:var(--text2);">${h}</span>`).join('')}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderOPElementos() {
+  const el = document.getElementById('elementosGrid');
+  el.innerHTML = Object.entries(SYSTEMS.op.elementos).map(([nome, data]) => `
+    <div style="background:var(--panel);border:1px solid ${data.cor};overflow:hidden;">
+      <div style="background:${data.cor};padding:14px 16px;">
+        <div style="font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--white);">Elemento: ${nome}</div>
+      </div>
+      <div style="padding:14px;">
+        <p style="font-size:13px;color:var(--text2);font-style:italic;margin-bottom:12px;line-height:1.6;">${data.desc}</p>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:8px;">RITUAIS DISPONÍVEIS</div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          ${data.rituais.map((r,i) => `
+            <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(0,0,0,0.2);border-left:2px solid ${data.cor};">
+              <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);min-width:20px;">${i+1}.</span>
+              <span style="font-size:13px;color:var(--text);">${r}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderOPPericias() {
+  const attrMap = {
+    'Acrobacia':'AGI','Adestramento':'PRE','Atletismo':'FOR','Atualidades':'INT',
+    'Ciências':'INT','Crime':'AGI','Diplomacia':'PRE','Enganação':'PRE',
+    'Fortitude':'VIG','Furtividade':'AGI','Iniciativa':'AGI','Intimidação':'PRE',
+    'Intuição':'PRE','Investigação':'INT','Luta':'FOR','Medicina':'INT',
+    'Ocultismo':'INT','Percepção':'INT','Pilotagem':'AGI','Pontaria':'AGI',
+    'Prestidigitação':'AGI','Profissão':'INT','Reflexos':'AGI','Religião':'INT',
+    'Sobrevivência':'INT','Tecnologia':'INT','Vontade':'PRE'
+  };
+  const attrColor = { 'FOR':'#c0392b','AGI':'#27ae60','INT':'#2980b9','VIG':'#8e44ad','PRE':'#e67e22' };
+  const el = document.getElementById('periciasGrid');
+  el.innerHTML = SYSTEMS.op.pericias.map(p => {
+    const attr = attrMap[p] || '?';
+    const cor = attrColor[attr] || 'var(--muted)';
+    return `
+      <div style="background:var(--panel2);border:1px solid var(--border);padding:8px 12px;display:flex;align-items:center;gap:8px;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:8px;padding:2px 5px;background:${cor}22;border:1px solid ${cor};color:${cor};min-width:28px;text-align:center;">${attr}</span>
+        <span style="font-size:13px;font-weight:600;color:var(--text);">${p}</span>
+      </div>`;
+  }).join('');
+}
+
+function renderOPOrigens() {
+  const el = document.getElementById('origensGrid');
+  const icons = ['🎓','🌀','🎨','⚽','📺','🍳','🔪','🏕️','🔍','💉','⚙️','💼','🕵️','🪖','💻','🔎','📰','🥊','🩺','⚔️','🧘','📚','👮','🏛️','⛪','📋','🎖️','🔧','👷','🎒'];
+  el.innerHTML = SYSTEMS.op.origens.map((o, i) => `
+    <div style="background:var(--panel2);border:1px solid var(--border);padding:10px 12px;display:flex;align-items:center;gap:8px;transition:border-color 0.2s;cursor:default;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+      <span style="font-size:18px;">${icons[i]||'👤'}</span>
+      <span style="font-size:13px;font-weight:600;color:var(--text);">${o}</span>
+    </div>
+  `).join('');
+}
+
+const OP_ENTIDADES = [
+  { nome: 'Assombração', tipo: 'Morto-Vivo', ameaca: 1, pv: 15, def: 10, atk: 'Toque Gélido +3 | 1d6 frio', habs: 'Incorpóreo, Invisibilidade, Drenar Calor', desc: 'Espírito preso no mundo material por trauma ou missão inacabada.' },
+  { nome: 'Corrompido', tipo: 'Humanoide', ameaca: 1, pv: 22, def: 12, atk: 'Garras +4 | 1d8+2 cortante', habs: 'Fúria Paranormal, Resistência à Dor', desc: 'Humano consumido pela exposição ao Outro Lado. Age por instinto.' },
+  { nome: 'Sombra Devoratriz', tipo: 'Aberração', ameaca: 2, pv: 30, def: 13, atk: 'Consumir +5 | 2d6 necrótico', habs: 'Manto das Trevas, Drenar Sanidade (-1d4 SAN)', desc: 'Predador do Outro Lado que se alimenta da sanidade de suas vítimas.' },
+  { nome: 'Sectário Iniciado', tipo: 'Humanoide', ameaca: 1, pv: 18, def: 11, atk: 'Faca +3 | 1d6+1 | Pistola +4 | 1d8', habs: 'Fanatismo (imune a medo), Ritual Menor', desc: 'Membro de culto paranormal com conhecimento básico de rituais.' },
+  { nome: 'Lobisomem', tipo: 'Metamorfo', ameaca: 3, pv: 45, def: 14, atk: 'Mordida +7 | 2d8+4 | Garras +6 | 1d10+4', habs: 'Regeneração 5/turno, Vulnerável a Prata, Transmissão', desc: 'Humano infectado que se transforma em predador ao entardecer.' },
+  { nome: 'Espectro Sanguinário', tipo: 'Morto-Vivo', ameaca: 3, pv: 38, def: 14, atk: 'Forma Etérea +6 | 2d8 necrótico', habs: 'Drenar Vitalidade, Imune a não-mágico, Aura de Terror', desc: 'Espírito violento alimentado por mortes violentas repetidas.' },
+  { nome: 'Górgona Paranormal', tipo: 'Monstro', ameaca: 4, pv: 60, def: 16, atk: 'Chifres +8 | 2d10+5 | Olhar Petrificante', habs: 'Olhar Petrificante (VIG dif. 15), Resistência Mágica', desc: 'Criatura do Outro Lado com poder de solidificar a realidade.' },
+  { nome: 'Cultista Mestre', tipo: 'Humanoide', ameaca: 4, pv: 52, def: 15, atk: 'Pistola +6 | 2d6 | Ritual de Dano +7 | 3d8', habs: 'Ritual Avançado, Escudo Paranormal, Sacrifício', desc: 'Líder de culto com controle sobre elementos do Outro Lado.' },
+  { nome: 'Entidade Primordial', tipo: 'Aberração', ameaca: 8, pv: 120, def: 18, atk: 'Toque Corrompido +10 | 4d10+6 | Onda Paranormal (área)', habs: 'Resistência Total, Aura de Corrupção, Drenar NEX', desc: 'Ser antigo do Outro Lado. Sua mera presença corrói a sanidade.' },
+];
+
+function renderOPEntidades() {
+  const el = document.getElementById('entidadesGrid');
+  const ameacaColor = a => a <= 2 ? '#27ae60' : a <= 4 ? '#e67e22' : '#c0392b';
+  el.innerHTML = OP_ENTIDADES.map((e, i) => `
+    <div style="background:var(--panel);border:1px solid var(--border);overflow:hidden;">
+      <div style="background:rgba(0,0,0,0.3);border-bottom:1px solid var(--border);padding:12px 14px;display:flex;align-items:center;gap:10px;">
+        <div style="flex:1;">
+          <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:var(--white);">${e.nome}</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px;">${e.tipo}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:${ameacaColor(e.ameaca)};">${e.ameaca}</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);">AMEAÇA</div>
+        </div>
+      </div>
+      <div style="padding:12px 14px;">
+        <p style="font-size:12px;color:var(--text2);font-style:italic;margin-bottom:10px;line-height:1.5;">${e.desc}</p>
+        <div style="display:flex;gap:12px;font-family:'Share Tech Mono',monospace;font-size:10px;margin-bottom:8px;">
+          <span style="color:var(--red2);">PV:${e.pv}</span>
+          <span style="color:var(--gold);">DEF:${e.def}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text);margin-bottom:6px;"><span style="color:var(--red2);font-family:'Share Tech Mono',monospace;font-size:9px;">ATK:</span> ${e.atk}</div>
+        <div style="font-size:11px;color:var(--muted);"><span style="color:var(--gold);font-family:'Share Tech Mono',monospace;font-size:9px;">HABS:</span> ${e.habs}</div>
+        <button onclick="addOPEntityToInit(${i})" style="margin-top:10px;width:100%;background:none;border:1px solid var(--red2);color:var(--red2);font-family:'Cinzel',serif;font-size:10px;padding:6px;cursor:pointer;letter-spacing:1px;" onmouseover="this.style.background='var(--red2)';this.style.color='white'" onmouseout="this.style.background='none';this.style.color='var(--red2)'">+ ADICIONAR À INICIATIVA</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addOPEntityToInit(i) {
+  const e = OP_ENTIDADES[i];
+  const init = Math.floor(Math.random() * 20) + 1;
+  addCombatant(e.nome, init, e.pv);
+  showToast(`💀 ${e.nome} entrou no combate! (Iniciativa ${init})`);
+}
+
+setMode('normal');
+renderAttrInputs();
+renderFichas();
+renderMonsters();
+renderMacros();
+updateXPBar();
+renderOPPage();
+updateTrackerUI();
+populateTrackerSelect();
+</script>
+</body>
+</html>
